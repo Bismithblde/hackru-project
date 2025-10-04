@@ -29,6 +29,7 @@ const Room: React.FC = () => {
 
   const [dailyRoomUrl, setDailyRoomUrl] = useState<string | null>(null);
   const [dailyRoomError, setDailyRoomError] = useState<string | null>(null);
+  const dailyContainerRef = useRef<HTMLDivElement>(null);
 
   // Fetch Daily room URL when component mounts
   useEffect(() => {
@@ -122,17 +123,22 @@ const Room: React.FC = () => {
 
     try {
       console.log("[Daily] Joining room:", dailyRoomUrl, "as", username);
-      await joinDailyRoom(dailyRoomUrl, username, {
-        onParticipantJoined: (participant) => {
-          console.log("[Daily] Participant joined:", participant.user_name);
+      await joinDailyRoom(
+        dailyRoomUrl,
+        username,
+        {
+          onParticipantJoined: (participant) => {
+            console.log("[Daily] Participant joined:", participant.user_name);
+          },
+          onParticipantLeft: (participant) => {
+            console.log("[Daily] Participant left:", participant.user_name);
+          },
+          onError: (error) => {
+            console.error("[Daily] Error:", error);
+          },
         },
-        onParticipantLeft: (participant) => {
-          console.log("[Daily] Participant left:", participant.user_name);
-        },
-        onError: (error) => {
-          console.error("[Daily] Error:", error);
-        },
-      });
+        dailyContainerRef.current || undefined // Pass the container for iframe
+      );
       console.log("[Room] Successfully joined Daily room");
     } catch (error: any) {
       console.error("[Room] Failed to join Daily room:", error);
@@ -232,6 +238,9 @@ const Room: React.FC = () => {
           </div>
         </>
       )}
+      
+      {/* Daily.co iframe container - will appear at bottom right when voice chat is active */}
+      <div ref={dailyContainerRef} id="daily-iframe-container"></div>
     </div>
   );
 };
