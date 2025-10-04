@@ -10,7 +10,9 @@ const { createSocketController } = require("./controllers/socketController");
 const { createDailyRoom } = require("./services/dailyService");
 
 const PORT = process.env.PORT || 4000;
-const CORS_ORIGIN = process.env.CORS_ALLOWED_ORIGINS || "*";
+const CORS_ORIGIN = process.env.CORS_ALLOWED_ORIGINS 
+  ? process.env.CORS_ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  : "*";
 
 const app = express();
 app.use(helmet());

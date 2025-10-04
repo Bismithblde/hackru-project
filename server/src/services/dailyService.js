@@ -42,9 +42,20 @@ async function createDailyRoom(roomId) {
     throw new Error("DAILY_API_KEY is not set in environment variables");
   }
 
-  console.log("[Daily] Creating room:", roomId);
+  console.log("[Daily] Attempting to get or create room:", roomId);
 
   try {
+    // First, try to get the existing room
+    try {
+      const existingRoom = await getDailyRoom(roomId);
+      console.log("[Daily] Room already exists, using it:", existingRoom.name);
+      return existingRoom;
+    } catch (getRoomError) {
+      // Room doesn't exist, continue to create it
+      console.log("[Daily] Room doesn't exist yet, creating new room");
+    }
+
+    // Create new room
     const body = JSON.stringify({
       name: roomId,
       privacy: "public",
@@ -69,25 +80,12 @@ async function createDailyRoom(roomId) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("[Daily] API error response:", response.status, errorText);
-      
-      let error;
-      try {
-        error = JSON.parse(errorText);
-      } catch (e) {
-        throw new Error(`Daily API error: ${response.status} ${response.statusText}`);
-      }
-      
-      // If room already exists, try to get it
-      if (error.info === "room-name-already-exists") {
-        console.log("[Daily] Room already exists, fetching existing room");
-        return await getDailyRoom(roomId);
-      }
-      throw new Error(`Daily API error: ${error.error || response.statusText}`);
+      console.error("[Daily] Create room failed:", response.status, errorText);
+      throw new Error(`Daily API error: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
-    console.log("[Daily] Created room successfully:", data.name);
+    console.log("[Daily] Created new room successfully:", data.name);
     return {
       url: data.url,
       name: data.name,
@@ -108,27 +106,23 @@ async function getDailyRoom(roomId) {
     throw new Error("DAILY_API_KEY is not set in environment variables");
   }
 
-  try {
-    const response = await makeRequest(`${DAILY_API_BASE}/rooms/${roomId}`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${DAILY_API_KEY}`,
-      },
-    });
+  const response = await makeRequest(`${DAILY_API_BASE}/rooms/${roomId}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${DAILY_API_KEY}`,
+    },
+  });
 
-    if (!response.ok) {
-      throw new Error(`Daily API error: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    return {
-      url: data.url,
-      name: data.name,
-    };
-  } catch (error) {
-    console.error("[Daily] Failed to get room:", error);
-    throw error;
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Room not found: ${response.status}`);
   }
+
+  const data = await response.json();
+  return {
+    url: data.url,
+    name: data.name,
+  };
 }
 
 /**
