@@ -34,7 +34,7 @@ io.on("connection", (socket) => {
   socketController.register(socket);
 });
 
-server.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, "0.0.0.0", () => {
   console.log(`Server listening on port ${PORT}`);
   console.log(`Network access: http://192.168.40.38:${PORT}`);
 });
