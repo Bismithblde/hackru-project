@@ -312,23 +312,33 @@ const Room: React.FC = () => {
               <AudioControls
                 onMicEnabled={async () => {
                   setHasMic(true);
-                  // When mic is enabled, create offers to existing users
+                  
+                  // AGGRESSIVE FIX: Close all existing connections and restart fresh
+                  const { cleanup: cleanupWebRTC } = await import('../lib/webrtc');
+                  cleanupWebRTC();
+                  
+                  // Wait a moment for cleanup
+                  await new Promise(resolve => setTimeout(resolve, 500));
+                  
+                  // Now create fresh offers to ALL users
                   const s = getSocket();
                   // eslint-disable-next-line no-console
                   console.log(
-                    "[Room] Mic enabled. My socket:",
+                    "[Room] Mic enabled. Restarting all connections. My socket:",
                     s?.id,
                     "Users in room:",
                     users
                   );
+                  
                   if (s && s.id) {
+                    // Clear the offered peers set
+                    offeredPeers.current.clear();
+                    
                     for (const usr of users) {
                       if (usr.socketId && usr.socketId !== s.id) {
-                        // Always create/recreate offer when mic is enabled (even if we already have a connection)
-                        // This ensures our local tracks are added to the connection
                         // eslint-disable-next-line no-console
                         console.log(
-                          "[Room] Creating offer to:",
+                          "[Room] Creating fresh offer to:",
                           usr.socketId,
                           usr.username
                         );

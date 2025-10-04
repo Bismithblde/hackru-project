@@ -42,43 +42,6 @@ export async function initLocalAudio(): Promise<MediaStream> {
 
   console.log("[webrtc] Local audio initialized");
 
-  // Add local tracks to any existing peer connections that don't have them yet
-  // AND trigger renegotiation so the other side knows we now have audio
-  const renegotiationPromises: Promise<void>[] = [];
-  pcMap.forEach((pc, remoteSocketId) => {
-    const senders = pc.getSenders();
-    if (senders.length === 0) {
-      localStream!.getTracks().forEach((track) => {
-        pc.addTrack(track, localStream!);
-        console.log(
-          "[webrtc] Added track to existing peer connection:",
-          remoteSocketId
-        );
-      });
-      
-      // Trigger renegotiation by creating a new offer
-      const renegotiate = async () => {
-        try {
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          console.log("[webrtc] Renegotiating with", remoteSocketId);
-          // Dispatch event to send new offer
-          window.dispatchEvent(
-            new CustomEvent("webrtc-create-offer", {
-              detail: { to: remoteSocketId },
-            })
-          );
-        } catch (err) {
-          console.error("[webrtc] Renegotiation failed:", err);
-        }
-      };
-      renegotiationPromises.push(renegotiate());
-    }
-  });
-
-  // Wait for all renegotiations to complete
-  await Promise.all(renegotiationPromises);
-
   return localStream;
 }
 
@@ -179,12 +142,20 @@ export async function handleIceCandidate(
 }
 
 export function cleanup(): void {
-  pcMap.forEach((pc) => pc.close());
+  console.log("[webrtc] Cleaning up all connections");
+  
+  pcMap.forEach((pc, socketId) => {
+    console.log("[webrtc] Closing connection to", socketId);
+    pc.close();
+  });
   pcMap.clear();
+  
   if (localStream) {
     localStream.getTracks().forEach((track) => track.stop());
     localStream = null;
   }
+  
+  console.log("[webrtc] Cleanup complete");
 }
 
 export function setMuted(muted: boolean): void {
