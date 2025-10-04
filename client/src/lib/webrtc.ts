@@ -7,24 +7,24 @@ let remoteTrackCb: RemoteTrackCallback | null = null;
 const ICE_SERVERS = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' },
-    // Twilio TURN servers (free, reliable)
+    // Metered TURN - Free and reliable
     {
-      urls: 'turn:global.turn.twilio.com:3478?transport=udp',
-      username: 'f4b4035eaa76f4a55de5f4351567653ee4ff6fa97b50b6b334fcc1be9c27212d',
-      credential: 'w1uxM55V9yVoqyVFjt+mxDBV0F87AUCemaYVQGxsPLw='
+      urls: 'turn:a.relay.metered.ca:80',
+      username: 'e9337a06f8e992f8f6c4ba89',
+      credential: 'PYuCKU1ZTZTgAnBg'
     },
     {
-      urls: 'turn:global.turn.twilio.com:3478?transport=tcp',
-      username: 'f4b4035eaa76f4a55de5f4351567653ee4ff6fa97b50b6b334fcc1be9c27212d',
-      credential: 'w1uxM55V9yVoqyVFjt+mxDBV0F87AUCemaYVQGxsPLw='
+      urls: 'turn:a.relay.metered.ca:80?transport=tcp',
+      username: 'e9337a06f8e992f8f6c4ba89',
+      credential: 'PYuCKU1ZTZTgAnBg'
     },
     {
-      urls: 'turn:global.turn.twilio.com:443?transport=tcp',
-      username: 'f4b4035eaa76f4a55de5f4351567653ee4ff6fa97b50b6b334fcc1be9c27212d',
-      credential: 'w1uxM55V9yVoqyVFjt+mxDBV0F87AUCemaYVQGxsPLw='
+      urls: 'turn:a.relay.metered.ca:443',
+      username: 'e9337a06f8e992f8f6c4ba89',
+      credential: 'PYuCKU1ZTZTgAnBg'
     }
-  ]
+  ],
+  iceCandidatePoolSize: 10
 };
 
 export async function initLocalAudio(): Promise<MediaStream> {

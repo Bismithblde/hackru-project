@@ -79,16 +79,19 @@ function createSocketController(io, roomService) {
     // WebRTC signaling
     socket.on("webrtc:offer", (payload = {}) => {
       const { to } = payload;
+      console.log(`[WebRTC] Forwarding offer from ${socket.id} to ${to}`);
       if (to) io.to(to).emit("webrtc:offer", { ...payload, from: socket.id });
     });
 
     socket.on("webrtc:answer", (payload = {}) => {
       const { to } = payload;
+      console.log(`[WebRTC] Forwarding answer from ${socket.id} to ${to}`);
       if (to) io.to(to).emit("webrtc:answer", { ...payload, from: socket.id });
     });
 
     socket.on("webrtc:ice", (payload = {}) => {
       const { to } = payload;
+      console.log(`[WebRTC] Forwarding ICE from ${socket.id} to ${to}`);
       if (to) io.to(to).emit("webrtc:ice", { ...payload, from: socket.id });
     });
 
