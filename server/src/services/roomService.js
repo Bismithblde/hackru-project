@@ -46,7 +46,32 @@ function createRoomService() {
     }));
   }
 
-  return { rooms, addUser, removeUser, removeUserBySocket, getUsers };
+  // Leaderboard: Map roomId -> Map(userId -> { userId, username, points })
+  const leaderboards = new Map();
+
+  function ensureLeaderboard(roomId) {
+    if (!leaderboards.has(roomId)) leaderboards.set(roomId, new Map());
+    return leaderboards.get(roomId);
+  }
+
+  function addPoints(roomId, userId, username, points) {
+    const lb = ensureLeaderboard(roomId);
+    const cur = lb.get(userId) || { userId, username, points: 0 };
+    cur.points = (cur.points || 0) + points;
+    cur.username = username || cur.username;
+    lb.set(userId, cur);
+    return cur;
+  }
+
+  function getLeaderboard(roomId, top = 10) {
+    const lb = leaderboards.get(roomId);
+    if (!lb) return [];
+    const arr = Array.from(lb.values());
+    arr.sort((a, b) => b.points - a.points);
+    return arr.slice(0, top);
+  }
+
+  return { rooms, addUser, removeUser, removeUserBySocket, getUsers, addPoints, getLeaderboard };
 }
 
 module.exports = { createRoomService };

@@ -2,6 +2,8 @@ import React from "react";
 
 type User = { userId: string; username: string; socketId: string };
 
+import { emit } from '../lib/socket';
+
 const Presence: React.FC<{ users: User[]; meSocketId?: string }> = ({
   users,
   meSocketId,
@@ -23,6 +25,30 @@ const Presence: React.FC<{ users: User[]; meSocketId?: string }> = ({
                   {meSocketId === u.socketId ? " • you" : ""}
                 </div>
               </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {meSocketId !== u.socketId && (
+                <button
+                  className="px-2 py-1 bg-amber-400 text-xs rounded"
+                  onClick={() => {
+                    const input = prompt('Award points to ' + u.username + ' (1-10):', '1');
+                    if (!input) return;
+                    const pts = Number(input);
+                    if (!pts || pts < 1 || pts > 10) return alert('Points must be 1-10');
+                    emit('points:award', {
+                      roomId: (window as any).__currentRoomId || 'room-1',
+                      fromUserId: (window as any).__currentUserId || 'unknown',
+                      fromUsername: (window as any).__currentUsername || 'unknown',
+                      toUserId: u.userId,
+                      toUsername: u.username,
+                      points: pts,
+                      ts: Date.now(),
+                    });
+                  }}
+                >
+                  +{" "}pt
+                </button>
+              )}
             </div>
           </li>
         ))}
