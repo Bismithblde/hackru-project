@@ -28,17 +28,30 @@ const Room: React.FC = () => {
   >([]);
 
   const [dailyRoomUrl, setDailyRoomUrl] = useState<string | null>(null);
+  const [dailyRoomError, setDailyRoomError] = useState<string | null>(null);
 
   // Fetch Daily room URL when component mounts
   useEffect(() => {
     const fetchDailyRoom = async () => {
       try {
+        console.log("[Daily] Fetching room URL from:", `${SERVER_URL}/api/daily-room/${roomId}`);
         const response = await fetch(`${SERVER_URL}/api/daily-room/${roomId}`);
+        
+        if (!response.ok) {
+          throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+        }
+        
         const data = await response.json();
+        
+        if (!data.url) {
+          throw new Error("No room URL returned from server");
+        }
+        
         setDailyRoomUrl(data.url);
-        console.log("[Daily] Room URL:", data.url);
-      } catch (error) {
+        console.log("[Daily] Room URL fetched successfully:", data.url);
+      } catch (error: any) {
         console.error("[Daily] Failed to fetch room URL:", error);
+        setDailyRoomError(error.message || "Failed to create voice room");
       }
     };
     fetchDailyRoom();
@@ -91,12 +104,19 @@ const Room: React.FC = () => {
   }, [username, roomId]);
 
   const handleMicEnabled = async () => {
-    if (!dailyRoomUrl || !username) {
-      console.error("[Daily] Room URL or username not available");
+    if (!username) {
+      alert("Please enter your username first");
+      return;
+    }
+    
+    if (!dailyRoomUrl) {
+      alert("Voice room is still loading. Please wait a moment and try again.");
+      console.error("[Daily] Room URL not available yet");
       return;
     }
 
     try {
+      console.log("[Daily] Joining room:", dailyRoomUrl, "as", username);
       await joinDailyRoom(dailyRoomUrl, username, {
         onParticipantJoined: (participant) => {
           console.log("[Daily] Participant joined:", participant.user_name);
@@ -109,8 +129,9 @@ const Room: React.FC = () => {
         },
       });
       console.log("[Room] Successfully joined Daily room");
-    } catch (error) {
+    } catch (error: any) {
       console.error("[Room] Failed to join Daily room:", error);
+      alert(`Failed to join voice chat: ${error.message || "Unknown error"}`);
     }
   };
 
@@ -151,13 +172,25 @@ const Room: React.FC = () => {
                   User ID: {userIdRef.current.slice(0, 8)}...
                 </div>
               </div>
-              <AudioControls
-                onMicEnabled={handleMicEnabled}
-                onError={(err) => {
-                  console.error("[Room] Mic error:", err);
-                  alert(`Microphone error: ${err}`);
-                }}
-              />
+              <div>
+                {dailyRoomError && (
+                  <div className="text-xs text-red-600 mb-2">
+                    Voice chat error: {dailyRoomError}
+                  </div>
+                )}
+                {!dailyRoomUrl && !dailyRoomError && (
+                  <div className="text-xs text-gray-500 mb-2">
+                    Loading voice chat...
+                  </div>
+                )}
+                <AudioControls
+                  onMicEnabled={handleMicEnabled}
+                  onError={(err) => {
+                    console.error("[Room] Mic error:", err);
+                    alert(`Microphone error: ${err}`);
+                  }}
+                />
+              </div>
             </div>
             <Presence users={users} meSocketId={meSocket.current ?? ""} />
           </div>
