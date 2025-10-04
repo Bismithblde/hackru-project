@@ -34,19 +34,24 @@ const Room: React.FC = () => {
   useEffect(() => {
     const fetchDailyRoom = async () => {
       try {
-        console.log("[Daily] Fetching room URL from:", `${SERVER_URL}/api/daily-room/${roomId}`);
+        console.log(
+          "[Daily] Fetching room URL from:",
+          `${SERVER_URL}/api/daily-room/${roomId}`
+        );
         const response = await fetch(`${SERVER_URL}/api/daily-room/${roomId}`);
-        
+
         if (!response.ok) {
-          throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+          throw new Error(
+            `Server returned ${response.status}: ${response.statusText}`
+          );
         }
-        
+
         const data = await response.json();
-        
+
         if (!data.url) {
           throw new Error("No room URL returned from server");
         }
-        
+
         setDailyRoomUrl(data.url);
         console.log("[Daily] Room URL fetched successfully:", data.url);
       } catch (error: any) {
@@ -108,7 +113,7 @@ const Room: React.FC = () => {
       alert("Please enter your username first");
       return;
     }
-    
+
     if (!dailyRoomUrl) {
       alert("Voice room is still loading. Please wait a moment and try again.");
       console.error("[Daily] Room URL not available yet");

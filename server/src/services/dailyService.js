@@ -72,7 +72,7 @@ async function createDailyRoom(roomId) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${DAILY_API_KEY}`,
+        Authorization: `Bearer ${DAILY_API_KEY}`,
         "Content-Length": Buffer.byteLength(body),
       },
       body: body,
@@ -81,7 +81,9 @@ async function createDailyRoom(roomId) {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("[Daily] Create room failed:", response.status, errorText);
-      throw new Error(`Daily API error: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `Daily API error: ${response.status} ${response.statusText}`
+      );
     }
 
     const data = await response.json();

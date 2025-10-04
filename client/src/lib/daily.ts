@@ -24,27 +24,41 @@ export async function joinDailyRoom(
       callObject = DailyIframe.createCallObject({
         audioSource: true,
         videoSource: false, // We only want audio
+        subscribeToTracksAutomatically: true, // Auto-subscribe to audio tracks
       });
 
       // Set up event listeners
       callObject
         .on("participant-joined", (event) => {
-          console.log("[Daily] Participant joined:", event.participant);
+          console.log(
+            "[Daily] Participant joined:",
+            event.participant.user_name
+          );
           if (callbacks?.onParticipantJoined) {
             callbacks.onParticipantJoined(event.participant);
           }
         })
         .on("participant-left", (event) => {
-          console.log("[Daily] Participant left:", event.participant);
+          console.log("[Daily] Participant left:", event.participant.user_name);
           if (callbacks?.onParticipantLeft) {
             callbacks.onParticipantLeft(event.participant);
           }
         })
         .on("participant-updated", (event) => {
-          console.log("[Daily] Participant updated:", event.participant);
+          console.log(
+            "[Daily] Participant updated:",
+            event.participant.user_name
+          );
           if (callbacks?.onParticipantUpdated) {
             callbacks.onParticipantUpdated(event.participant);
           }
+        })
+        .on("track-started", (event) => {
+          console.log(
+            "[Daily] Track started:",
+            event.participant?.user_name,
+            event.track.kind
+          );
         })
         .on("error", (event) => {
           console.error("[Daily] Error:", event);
@@ -54,13 +68,17 @@ export async function joinDailyRoom(
         });
     }
 
+    console.log("[Daily] Joining room:", roomUrl, "as", userName);
+
     // Join the room
     await callObject.join({
       url: roomUrl,
       userName: userName,
     });
 
-    console.log("[Daily] Joined room:", roomUrl);
+    console.log("[Daily] Successfully joined room!");
+    console.log("[Daily] Participants:", await callObject.participants());
+
     return callObject;
   } catch (error) {
     console.error("[Daily] Failed to join room:", error);
