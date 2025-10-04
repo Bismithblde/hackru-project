@@ -14,7 +14,10 @@ const Room: React.FC = () => {
       </div>
 
       <div className="bg-white border rounded-lg p-4">
-        <p className="text-slate-600">This is a stub page for room id <span className="font-mono text-sm text-slate-800">{id}</span>.</p>
+        <p className="text-slate-600">
+          This is a stub page for room id{" "}
+          <span className="font-mono text-sm text-slate-800">{id}</span>.
+        </p>
       </div>
     </div>
   );
