@@ -1,4 +1,4 @@
-type RemoteTrackCallback = (socketId: string, stream: MediaStream) => void;
+﻿type RemoteTrackCallback = (socketId: string, stream: MediaStream) => void;
 
 const pcMap = new Map<string, RTCPeerConnection>();
 let localStream: MediaStream | null = null;
@@ -6,229 +6,132 @@ let remoteTrackCb: RemoteTrackCallback | null = null;
 
 const ICE_SERVERS = {
   iceServers: [
-    { urls: "stun:stun.l.google.com:19302" },
-    // Free public TURN server for dev/testing only
-    {
-      urls: "turn:openrelay.metered.ca:80",
-      username: "openrelayproject",
-      credential: "openrelayproject"
-    }
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
   ]
 };
 
-export async function initLocalAudio() {
-  if (!localStream) {
-    localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    // Add tracks to all existing peer connections
-    for (const [peerId, pc] of pcMap.entries()) {
-      for (const t of localStream.getTracks()) {
-        // Only add if not already present
-        const senders = pc.getSenders();
-        if (!senders.some(s => s.track && s.track.id === t.id)) {
-          try {
-            pc.addTrack(t, localStream);
-            // eslint-disable-next-line no-console
-            console.log(`[webrtc] Added local track ${t.id} to peer ${peerId}`);
-          } catch (e) {
-            // eslint-disable-next-line no-console
-            console.warn(`[webrtc] Failed to add track to peer ${peerId}:`, e);
-          }
-        }
-      }
-    }
-  }
-  // Log local stream tracks
+export async function initLocalAudio(): Promise<MediaStream> {
   if (localStream) {
-    for (const t of localStream.getTracks()) {
-      // eslint-disable-next-line no-console
-      console.log(`[webrtc] Local track: ${t.kind}, enabled=${t.enabled}, id=${t.id}`);
-    }
+    return localStream;
   }
+  
+  localStream = await navigator.mediaDevices.getUserMedia({ 
+    audio: {
+      echoCancellation: true,
+      noiseSuppression: true,
+      autoGainControl: true,
+    } 
+  });
+  
+  console.log('[webrtc] Local audio initialized');
+  
+  // Add local tracks to any existing peer connections that don't have them yet
+  pcMap.forEach((pc, remoteSocketId) => {
+    const senders = pc.getSenders();
+    if (senders.length === 0) {
+      localStream!.getTracks().forEach(track => {
+        pc.addTrack(track, localStream!);
+        console.log('[webrtc] Added track to existing peer connection:', remoteSocketId);
+      });
+    }
+  });
+  
   return localStream;
 }
 
-export function hasPeer(remoteSocketId: string) {
-  return pcMap.has(remoteSocketId);
+export function hasLocalStream(): boolean {
+  return localStream !== null;
 }
 
 export function setRemoteTrackCallback(cb: RemoteTrackCallback) {
   remoteTrackCb = cb;
 }
 
-export function createPeer(remoteSocketId: string) {
-  let pc = pcMap.get(remoteSocketId);
-  if (pc) return pc;
-
-  pc = new RTCPeerConnection(ICE_SERVERS);
-
-  // Log ICE connection state for debugging
-  pc.oniceconnectionstatechange = () => {
-    // eslint-disable-next-line no-console
-    console.log(`[webrtc] ICE state for ${remoteSocketId}:`, pc.iceConnectionState);
-    // Dispatch ICE state to UI
-    window.dispatchEvent(
-      new CustomEvent('webrtc-ice-state', {
-        detail: { peerId: remoteSocketId, state: pc.iceConnectionState },
-      })
-    );
-  };
-
-  // Always add local tracks if available
-  if (localStream) {
-    for (const t of localStream.getTracks()) {
-      try {
-        pc.addTrack(t, localStream);
-        // eslint-disable-next-line no-console
-        console.log(`[webrtc] Added local track ${t.id} to new peer ${remoteSocketId}`);
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.warn(`[webrtc] Track may already be added to peer ${remoteSocketId}:`, e);
-        window.dispatchEvent(
-          new CustomEvent('webrtc-error', {
-            detail: { message: `Failed to add track to peer ${remoteSocketId}: ${e}` },
-          })
-        );
-      }
-    }
-  } else {
-    // eslint-disable-next-line no-console
-    console.warn(`[webrtc] No localStream when creating peer ${remoteSocketId}`);
-    window.dispatchEvent(
-      new CustomEvent('webrtc-error', {
-        detail: { message: `No localStream when creating peer ${remoteSocketId}` },
-      })
-    );
+export function createPeerConnection(remoteSocketId: string): RTCPeerConnection {
+  if (pcMap.has(remoteSocketId)) {
+    return pcMap.get(remoteSocketId)!;
   }
 
-  pc.ontrack = (ev) => {
-    if (ev.streams && ev.streams[0] && remoteTrackCb) {
-      // eslint-disable-next-line no-console
-      console.log(`[webrtc] ontrack for ${remoteSocketId}, stream:`, ev.streams[0]);
-      remoteTrackCb(remoteSocketId, ev.streams[0]);
-    } else {
-      // eslint-disable-next-line no-console
-      console.warn(`[webrtc] ontrack fired but no stream or callback for ${remoteSocketId}`);
-      window.dispatchEvent(
-        new CustomEvent('webrtc-error', {
-          detail: { message: `ontrack fired but no stream or callback for ${remoteSocketId}` },
-        })
-      );
+  const pc = new RTCPeerConnection(ICE_SERVERS);
+
+  // Add local tracks if available (may not be if we haven't enabled mic yet)
+  if (localStream) {
+    localStream.getTracks().forEach(track => {
+      pc.addTrack(track, localStream!);
+      console.log('[webrtc] Added track to', remoteSocketId);
+    });
+  } else {
+    console.log('[webrtc] Creating peer connection without local stream (mic not enabled yet)');
+  }
+
+  pc.ontrack = (event) => {
+    console.log('[webrtc] Received track from', remoteSocketId);
+    if (event.streams && event.streams[0] && remoteTrackCb) {
+      remoteTrackCb(remoteSocketId, event.streams[0]);
     }
   };
 
-  pc.onicecandidate = (ev) => {
-    if (ev.candidate) {
-      window.dispatchEvent(
-        new CustomEvent("webrtc-ice-candidate", {
-          detail: { to: remoteSocketId, candidate: ev.candidate },
-        })
-      );
+  pc.onicecandidate = (event) => {
+    if (event.candidate) {
+      window.dispatchEvent(new CustomEvent('webrtc-ice-candidate', {
+        detail: { to: remoteSocketId, candidate: event.candidate }
+      }));
     }
+  };
+
+  pc.oniceconnectionstatechange = () => {
+    console.log('[webrtc] ICE state', remoteSocketId, pc.iceConnectionState);
   };
 
   pcMap.set(remoteSocketId, pc);
   return pc;
 }
 
-export async function createOffer(remoteSocketId: string) {
-  const pc = createPeer(remoteSocketId);
-  try {
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-    return offer;
-  } catch (e) {
-    window.dispatchEvent(
-      new CustomEvent('webrtc-error', {
-        detail: { message: `Failed to create/set offer for ${remoteSocketId}: ${e}` },
-      })
-    );
-    throw e;
-  }
+export async function createOffer(remoteSocketId: string): Promise<RTCSessionDescriptionInit> {
+  const pc = createPeerConnection(remoteSocketId);
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  console.log('[webrtc] Created offer for', remoteSocketId);
+  return offer;
 }
 
-export async function handleOffer(fromSocketId: string, sdp: any) {
-  const pc = createPeer(fromSocketId);
-  try {
-    await pc.setRemoteDescription(new RTCSessionDescription(sdp));
-    const answer = await pc.createAnswer();
-    await pc.setLocalDescription(answer);
-    return answer;
-  } catch (e) {
-    window.dispatchEvent(
-      new CustomEvent('webrtc-error', {
-        detail: { message: `Failed to handle offer from ${fromSocketId}: ${e}` },
-      })
-    );
-    throw e;
-  }
+export async function handleOffer(fromSocketId: string, offer: RTCSessionDescriptionInit): Promise<RTCSessionDescriptionInit> {
+  const pc = createPeerConnection(fromSocketId);
+  await pc.setRemoteDescription(new RTCSessionDescription(offer));
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+  console.log('[webrtc] Created answer for', fromSocketId);
+  return answer;
 }
 
-export async function handleAnswer(fromSocketId: string, sdp: any) {
-  const pc = pcMap.get(fromSocketId);
-  if (!pc) {
-    window.dispatchEvent(
-      new CustomEvent('webrtc-error', {
-        detail: { message: `No peer connection for handleAnswer from ${fromSocketId}` },
-      })
-    );
-    return;
-  }
-  // Only set remote answer if in correct signaling state
-  if (pc.signalingState === 'have-local-offer') {
-    try {
-      await pc.setRemoteDescription(new RTCSessionDescription(sdp));
-      // eslint-disable-next-line no-console
-      console.log(`[webrtc] setRemoteDescription(answer) for ${fromSocketId}, state now:`, pc.signalingState);
-    } catch (e) {
-      window.dispatchEvent(
-        new CustomEvent('webrtc-error', {
-          detail: { message: `Failed to set remote answer for ${fromSocketId}: ${e}` },
-        })
-      );
-    }
-  } else if (pc.signalingState === 'stable') {
-    // Silently ignore, this is benign and expected in some race conditions
-    return;
-  } else {
-    // eslint-disable-next-line no-console
-    console.warn(`[webrtc] Skipped setRemoteDescription(answer) for ${fromSocketId}: signalingState=${pc.signalingState}`);
-    window.dispatchEvent(
-      new CustomEvent('webrtc-error', {
-        detail: { message: `Skipped setRemoteDescription(answer) for ${fromSocketId}: signalingState=${pc.signalingState}` },
-      })
-    );
-  }
-}
-
-export function handleIce(fromSocketId: string, candidate: any) {
+export async function handleAnswer(fromSocketId: string, answer: RTCSessionDescriptionInit): Promise<void> {
   const pc = pcMap.get(fromSocketId);
   if (!pc) return;
-  pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(console.error);
+  if (pc.signalingState === 'stable') return;
+  await pc.setRemoteDescription(new RTCSessionDescription(answer));
+  console.log('[webrtc] Set answer for', fromSocketId);
 }
 
-export function closePeer(remoteSocketId: string) {
-  const pc = pcMap.get(remoteSocketId);
-  if (pc) {
-    pc.close();
-    pcMap.delete(remoteSocketId);
-  }
+export async function handleIceCandidate(fromSocketId: string, candidate: RTCIceCandidateInit): Promise<void> {
+  const pc = pcMap.get(fromSocketId);
+  if (!pc) return;
+  await pc.addIceCandidate(new RTCIceCandidate(candidate));
 }
 
-export function stopAll() {
-  for (const [k, pc] of pcMap.entries()) {
-    pc.close();
-    pcMap.delete(k);
-  }
+export function cleanup(): void {
+  pcMap.forEach(pc => pc.close());
+  pcMap.clear();
   if (localStream) {
-    for (const t of localStream.getTracks()) t.stop();
+    localStream.getTracks().forEach(track => track.stop());
     localStream = null;
   }
 }
 
-export function closeAllRemoteAudioElements() {
-  for (const id of Array.from(pcMap.keys())) {
-    const elId = `audio-${id}`;
-    const el = document.getElementById(elId);
-    if (el && el.parentNode) el.parentNode.removeChild(el);
+export function setMuted(muted: boolean): void {
+  if (localStream) {
+    localStream.getAudioTracks().forEach(track => {
+      track.enabled = !muted;
+    });
   }
 }

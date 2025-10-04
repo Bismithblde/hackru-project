@@ -11,8 +11,8 @@ import {
   handleOffer,
   handleAnswer,
   setRemoteTrackCallback,
-  handleIce as rtcHandleIce,
-  initLocalAudio,
+  handleIceCandidate,
+  cleanup,
 } from "../lib/webrtc";
 
 type User = { userId: string; username: string; socketId: string };
@@ -33,19 +33,11 @@ const Room: React.FC = () => {
   >([]);
 
   // speakingMap: socketId -> boolean (true if remote user is speaking)
-  const [speakingMap, setSpeakingMap] = useState<Record<string, boolean>>({});
-  const analyserRefs = useRef<Record<string, { ctx: AudioContext, analyser: AnalyserNode, src: MediaStreamAudioSourceNode }>>({});
-  // ICE state tracking
-  const [iceStates, setIceStates] = useState<Record<string, string>>({});
-  // Error reporting
-  const [rtcErrors, setRtcErrors] = useState<string[]>([]);
-
-
   // Track which peers we've already offered to (persists across renders)
   const offeredPeers = useRef<Set<string>>(new Set());
 
-  // Track if local mic is ready
-  const [micReady, setMicReady] = useState(false);
+  // Centralized mic state
+  const [hasMic, setHasMic] = useState(false);
 
   useEffect(() => {
     connect();
@@ -59,37 +51,35 @@ const Room: React.FC = () => {
       const s = getSocket();
       if (s) meSocket.current = s.id ?? null;
 
-      // For each remote user, attempt to create offer only if not already offered
-      (async () => {
-        // Block signaling until micReady is true
-        if (!micReady) {
-          // Wait for micReady to become true before proceeding
-          let waited = 0;
-          while (!micReady && waited < 5000) {
-            await new Promise((res) => setTimeout(res, 100));
-            waited += 100;
-          }
-          if (!micReady) {
-            // eslint-disable-next-line no-console
-            console.warn('Mic not ready after waiting, cannot signal peers');
-            return;
-          }
+      // eslint-disable-next-line no-console
+      console.log("[Room] Presence update. My socket:", s?.id, "Users:", u);
+
+      // Only signal peers if mic is enabled
+      if (!hasMic) {
+        // eslint-disable-next-line no-console
+        console.warn("Mic not enabled, cannot signal peers");
+        return;
+      }
+      for (const usr of u) {
+        if (
+          usr.socketId &&
+          usr.socketId !== meSocket.current &&
+          !offeredPeers.current.has(usr.socketId)
+        ) {
+          // eslint-disable-next-line no-console
+          console.log(
+            "[Room] Creating offer to new peer:",
+            usr.socketId,
+            usr.username
+          );
+          offeredPeers.current.add(usr.socketId);
+          window.dispatchEvent(
+            new CustomEvent("webrtc-create-offer", {
+              detail: { to: usr.socketId },
+            })
+          );
         }
-        for (const usr of u) {
-          if (
-            usr.socketId &&
-            usr.socketId !== meSocket.current &&
-            !offeredPeers.current.has(usr.socketId)
-          ) {
-            offeredPeers.current.add(usr.socketId);
-            window.dispatchEvent(
-              new CustomEvent("webrtc-create-offer", {
-                detail: { to: usr.socketId },
-              })
-            );
-          }
-        }
-      })();
+      }
     };
 
     const onPointsUpdate = (payload: any) => {
@@ -105,22 +95,30 @@ const Room: React.FC = () => {
     const onOffer = async (payload: any) => {
       const { from, sdp } = payload || {};
       if (!from || !sdp) return;
+      // eslint-disable-next-line no-console
+      console.log("[Room] Received offer from:", from);
       // Reset offer state for this peer (allow renegotiation)
       offeredPeers.current.delete(from);
       const answer = await handleOffer(from, sdp);
+      // eslint-disable-next-line no-console
+      console.log("[Room] Sending answer to:", from);
       emit("webrtc:answer", { to: from, sdp: answer });
     };
 
     const onAnswer = async (payload: any) => {
       const { from, sdp } = payload || {};
       if (!from || !sdp) return;
+      // eslint-disable-next-line no-console
+      console.log("[Room] Received answer from:", from);
       await handleAnswer(from, sdp);
     };
 
     const onIce = (payload: any) => {
       const { from, candidate } = payload || {};
       if (!from || !candidate) return;
-      rtcHandleIce(from, candidate);
+      // eslint-disable-next-line no-console
+      console.log("[Room] Received ICE candidate from:", from);
+      handleIceCandidate(from, candidate);
     };
 
     on("presence:update", onPresence);
@@ -134,18 +132,8 @@ const Room: React.FC = () => {
     const createOfferHandler = async (e: any) => {
       const to = e.detail?.to;
       if (!to) return;
-      // ensure local audio exists
-      if (!micReady) {
-        try {
-          await initLocalAudio();
-          setMicReady(true);
-        } catch (err) {
-          setMicReady(false);
-          // eslint-disable-next-line no-console
-          console.warn('Mic not ready, cannot create offer');
-          return;
-        }
-      }
+      // eslint-disable-next-line no-console
+      console.log("[Room] createOfferHandler: Creating offer to", to);
       const off = await createOffer(to);
       emit("webrtc:offer", { to, sdp: off });
     };
@@ -166,99 +154,47 @@ const Room: React.FC = () => {
     );
 
     // handle remote tracks
-  setRemoteTrackCallback((socketId, stream) => {
+    setRemoteTrackCallback((socketId, stream) => {
       // attach to audio element dynamically
       const elId = `audio-${socketId}`;
       let el = document.getElementById(elId) as HTMLAudioElement | null;
       if (!el) {
-        el = document.createElement('audio');
+        el = document.createElement("audio");
         el.id = elId;
         el.autoplay = true;
         el.muted = false;
         el.volume = 1;
         document.body.appendChild(el);
+        // eslint-disable-next-line no-console
+        console.log(`[audio] Created new audio element #${elId}`);
       }
       el.srcObject = stream;
       el.muted = false;
       el.volume = 1;
-      el.play().catch((err) => {
-        // eslint-disable-next-line no-console
-        console.warn('Remote audio play() failed:', err);
-      });
+
+      // Check if stream has audio tracks
+      const audioTracks = stream.getAudioTracks();
       // eslint-disable-next-line no-console
-      console.log(`[audio] attached remote stream to #${elId}`, stream);
+      console.log(
+        `[audio] Stream has ${audioTracks.length} audio tracks:`,
+        audioTracks
+      );
 
-      // --- Voice activity detection ---
-      // Clean up any previous analyser for this socketId
-      if (analyserRefs.current[socketId]) {
-        analyserRefs.current[socketId].ctx.close();
-        delete analyserRefs.current[socketId];
-      }
-      try {
-        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const src = ctx.createMediaStreamSource(stream);
-        const analyser = ctx.createAnalyser();
-        analyser.fftSize = 512;
-        src.connect(analyser);
-        analyserRefs.current[socketId] = { ctx, analyser, src };
-        // Poll for volume
-        const data = new Uint8Array(analyser.fftSize);
-        let running = true;
-        const check = () => {
-          if (!running) return;
-          analyser.getByteTimeDomainData(data);
-          // Calculate RMS (root mean square) to detect voice
-          let sum = 0;
-          for (let i = 0; i < data.length; i++) {
-            const v = (data[i] - 128) / 128;
-            sum += v * v;
-          }
-          const rms = Math.sqrt(sum / data.length);
-          // Log RMS for debugging
-          if (window.DEBUG_RMS) {
-            // eslint-disable-next-line no-console
-            console.log(`[audio] socketId=${socketId} RMS=`, rms);
-          }
-          // Lower threshold for easier detection
-          const speaking = rms > 0.008;
-          setSpeakingMap((prev) => ({ ...prev, [socketId]: speaking }));
-          setTimeout(check, 150);
-        };
-        check();
-        // Clean up on stream end
-        stream.getTracks().forEach((t) => {
-          t.addEventListener('ended', () => {
-            running = false;
-            setSpeakingMap((prev) => {
-              const copy = { ...prev };
-              delete copy[socketId];
-              return copy;
-            });
-            ctx.close();
-            delete analyserRefs.current[socketId];
+      el.play()
+        .then(() => {
+          // eslint-disable-next-line no-console
+          console.log(`[audio] ✅ Audio element #${elId} is playing!`, {
+            paused: el!.paused,
+            muted: el!.muted,
+            volume: el!.volume,
+            readyState: el!.readyState,
           });
+        })
+        .catch((err) => {
+          // eslint-disable-next-line no-console
+          console.error("❌ Remote audio play() failed:", err);
         });
-      } catch (err) {
-        // eslint-disable-next-line no-console
-        console.warn('Voice activity detection error:', err);
-      }
     });
-
-    // Listen for ICE state changes from webrtc.ts
-    function iceStateListener(e: any) {
-      const { peerId, state } = e.detail || {};
-      if (peerId && state) {
-        setIceStates((prev) => ({ ...prev, [peerId]: state }));
-      }
-    }
-    window.addEventListener('webrtc-ice-state', iceStateListener);
-
-    // Listen for RTC errors
-    function rtcErrorListener(e: any) {
-      const { message } = e.detail || {};
-      if (message) setRtcErrors((prev) => [...prev, message]);
-    }
-    window.addEventListener('webrtc-error', rtcErrorListener);
 
     return () => {
       off("presence:update", onPresence);
@@ -275,18 +211,8 @@ const Room: React.FC = () => {
         "webrtc-ice-candidate",
         iceCandidateHandler as EventListener
       );
-  window.removeEventListener('webrtc-ice-state', iceStateListener);
-  window.removeEventListener('webrtc-error', rtcErrorListener);
-  // stop and cleanup webrtc (async-safe)
-      (async () => {
-        try {
-          const wk = await import("../lib/webrtc");
-          wk.stopAll();
-          wk.closeAllRemoteAudioElements();
-        } catch (err) {
-          console.warn("webrtc cleanup failed", err);
-        }
-      })();
+      // cleanup webrtc
+      cleanup();
       leave();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -300,10 +226,6 @@ const Room: React.FC = () => {
       (window as any).__currentUserId = userIdRef.current;
       (window as any).__currentUsername = username;
       join(roomId, userIdRef.current, username);
-      // Automatically initialize local audio (mic) so tracks are ready for WebRTC
-      initLocalAudio()
-        .then(() => setMicReady(true))
-        .catch(() => setMicReady(false));
     }
   }, [username, roomId]);
 
@@ -331,9 +253,10 @@ const Room: React.FC = () => {
               placeholder="Enter your display name and press Enter"
             />
           </label>
-          {!micReady && (
+          {!hasMic && (
             <div className="mt-3 text-xs text-rose-600">
-              <b>Warning:</b> Microphone is not enabled. Please allow mic access for voice chat to work.
+              <b>Warning:</b> Microphone is not enabled. Please allow mic access
+              for voice chat to work.
             </div>
           )}
         </div>
@@ -343,15 +266,85 @@ const Room: React.FC = () => {
             <Presence
               users={users}
               meSocketId={meSocket.current ?? undefined}
-              speakingMap={speakingMap}
             />
           </div>
 
           <div className="col-span-2">
             <div className="space-y-4">
+              {/* Audio Debug Info */}
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded text-xs">
+                <div className="font-semibold mb-1">🎤 Voice Chat Status:</div>
+                <div>Mic Enabled: {hasMic ? "✅ Yes" : "❌ No"}</div>
+                <div>Participants: {users.length}</div>
+                <div className="mt-2 text-blue-600">
+                  <strong>Note:</strong> You won't hear yourself (prevents
+                  echo). Speak in one window and listen in the other window.
+                </div>
+                <button
+                  onClick={() => {
+                    const audioElements = document.querySelectorAll(
+                      'audio[id^="audio-"]'
+                    );
+                    // eslint-disable-next-line no-console
+                    console.log(
+                      `[DEBUG] Found ${audioElements.length} audio elements:`
+                    );
+                    audioElements.forEach((el: any) => {
+                      // eslint-disable-next-line no-console
+                      console.log(`  - ${el.id}:`, {
+                        paused: el.paused,
+                        muted: el.muted,
+                        volume: el.volume,
+                        hasSrcObject: !!el.srcObject,
+                        tracks: el.srcObject?.getTracks?.()?.length || 0,
+                      });
+                    });
+                    alert(
+                      `Found ${audioElements.length} audio element(s). Check console for details.`
+                    );
+                  }}
+                  className="mt-2 px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
+                >
+                  🔍 Check Audio Elements
+                </button>
+              </div>
+
               <AudioControls
-                onReady={() => {
-                  /* mic ready */
+                onMicEnabled={async () => {
+                  setHasMic(true);
+                  // When mic is enabled, create offers to existing users
+                  const s = getSocket();
+                  // eslint-disable-next-line no-console
+                  console.log(
+                    "[Room] Mic enabled. My socket:",
+                    s?.id,
+                    "Users in room:",
+                    users
+                  );
+                  if (s && s.id) {
+                    for (const usr of users) {
+                      if (usr.socketId && usr.socketId !== s.id) {
+                        // Always create/recreate offer when mic is enabled (even if we already have a connection)
+                        // This ensures our local tracks are added to the connection
+                        // eslint-disable-next-line no-console
+                        console.log(
+                          "[Room] Creating offer to:",
+                          usr.socketId,
+                          usr.username
+                        );
+                        offeredPeers.current.add(usr.socketId);
+                        window.dispatchEvent(
+                          new CustomEvent("webrtc-create-offer", {
+                            detail: { to: usr.socketId },
+                          })
+                        );
+                      }
+                    }
+                  }
+                }}
+                onError={(err) => {
+                  // eslint-disable-next-line no-console
+                  console.error("[AudioControls] Error:", err);
                 }}
               />
 
@@ -367,147 +360,6 @@ const Room: React.FC = () => {
                 }}
               />
 
-              {/* Diagnostics panel to help debug WebRTC/audio */}
-              <div className="mt-4 p-4 bg-slate-50 border rounded">
-                <h3 className="text-sm font-medium mb-2">Diagnostics</h3>
-                <div className="space-y-2">
-                  <div className="text-xs text-slate-600">
-                    Socket id:{" "}
-                    <span className="font-mono">{meSocket.current ?? "—"}</span>
-                  </div>
-                  <div className="text-xs text-slate-600">
-                    Participants:{" "}
-                    <span className="font-mono">{users.length}</span>
-                  </div>
-
-                  <div className="flex gap-2 mt-2">
-                    {/* ICE connection state panel */}
-                    <div className="mb-2">
-                      <div className="text-xs font-semibold text-slate-700">ICE Connection States</div>
-                      <ul className="text-xs text-slate-600">
-                        {Object.entries(iceStates).length === 0 ? (
-                          <li>No peers yet</li>
-                        ) : (
-                          Object.entries(iceStates).map(([peer, state]) => (
-                            <li key={peer}>
-                              Peer <span className="font-mono">{peer}</span>: <span className="font-mono">{state}</span>
-                            </li>
-                          ))
-                        )}
-                      </ul>
-                    </div>
-                    {/* RTC error panel */}
-                    {rtcErrors.length > 0 && (
-                      <div className="mb-2">
-                        <div className="text-xs font-semibold text-rose-700">RTC Errors</div>
-                        <ul className="text-xs text-rose-600">
-                          {rtcErrors.map((err, i) => (
-                            <li key={i}>{err}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    <button
-                      className="px-3 py-1 bg-indigo-600 text-white rounded text-sm"
-                      onClick={() => {
-                        // inspect audio elements in DOM
-                        const els = Array.from(
-                          document.querySelectorAll('audio[id^="audio-"]')
-                        ) as HTMLAudioElement[];
-                        const info = els.map((el) => ({
-                          id: el.id,
-                          hasSrcObject: !!(el as any).srcObject,
-                          tracks:
-                            (
-                              (el as any).srcObject as MediaStream | null
-                            )?.getTracks?.().length ?? 0,
-                        }));
-                        // show quick report
-                        // eslint-disable-next-line no-console
-                        console.log("audio-elements", info);
-                        alert(
-                          "Found " +
-                            info.length +
-                            " remote audio element(s). See console for details."
-                        );
-                      }}
-                    >
-                      Inspect remote audio elements
-                    </button>
-
-                    <button
-                      className="px-3 py-1 bg-emerald-600 text-white rounded text-sm"
-                      onClick={async () => {
-                        try {
-                          const s = await initLocalAudio();
-                          // create or reuse a local loopback audio element so user can hear their mic
-                          const id = "audio-local-loopback";
-                          let el = document.getElementById(
-                            id
-                          ) as HTMLAudioElement | null;
-                          if (!el) {
-                            el = document.createElement("audio");
-                            el.id = id;
-                            el.controls = true;
-                            el.autoplay = true;
-                            // small style so it isn't intrusive
-                            el.style.position = "fixed";
-                            el.style.right = "12px";
-                            el.style.bottom = "12px";
-                            el.style.zIndex = "9999";
-                            document.body.appendChild(el);
-                          }
-                          (el as any).srcObject = s;
-                          alert(
-                            "Local mic loopback started (use the small audio control at bottom-right to mute/unmute)."
-                          );
-                        } catch (err) {
-                          // eslint-disable-next-line no-console
-                          console.error("initLocalAudio failed", err);
-                          alert(
-                            "Could not access microphone: " +
-                              (err && (err as Error).message)
-                          );
-                        }
-                      }}
-                    >
-                      Play local mic (loopback)
-                    </button>
-                    <button
-                      className="px-3 py-1 bg-rose-500 text-white rounded text-sm"
-                      onClick={() => {
-                        // award demo points to current user from a demo bot (for testing)
-                        const room = (window as any).__currentRoomId || roomId;
-                        const toId =
-                          (window as any).__currentUserId || userIdRef.current;
-                        const toName =
-                          (window as any).__currentUsername ||
-                          username ||
-                          "you";
-                        // pick 5 demo points
-                        emit("points:award", {
-                          roomId: room,
-                          fromUserId: "demo-bot",
-                          fromUsername: "DemoBot",
-                          toUserId: toId,
-                          toUsername: toName,
-                          points: 5,
-                          ts: Date.now(),
-                        });
-                        alert("Demo points awarded to " + toName + ".");
-                      }}
-                    >
-                      Award demo points to me
-                    </button>
-                  </div>
-
-                  <div className="text-xs text-slate-500 mt-2">
-                    Tip: open a second browser or an incognito window, join the
-                    same room, and use the "Inspect remote audio elements"
-                    button to confirm remote streams were attached.
-                  </div>
-                </div>
-              </div>
               <div className="mt-4">
                 <Leaderboard entries={leaderboard} />
               </div>

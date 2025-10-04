@@ -1,52 +1,70 @@
 import React, { useState } from "react";
-import { initLocalAudio } from "../lib/webrtc";
+import { initLocalAudio, setMuted as setWebRTCMuted } from "../lib/webrtc";
 
-const AudioControls: React.FC<{ onReady?: () => void }> = ({ onReady }) => {
-  const [muted, setMuted] = useState(true);
+interface AudioControlsProps {
+  onMicEnabled?: () => void;
+  onError?: (error: string) => void;
+}
+
+const AudioControls: React.FC<AudioControlsProps> = ({ onMicEnabled, onError }) => {
   const [hasMic, setHasMic] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [isEnabling, setIsEnabling] = useState(false);
 
-  const enable = async () => {
+  const enableMic = async () => {
+    setIsEnabling(true);
     try {
-      const stream = await initLocalAudio();
-      if (stream) {
-        setHasMic(true);
-        setMuted(false);
-        onReady && onReady();
-      }
-    } catch (e) {
-      console.error("microphone denied", e);
+      await initLocalAudio();
+      setHasMic(true);
+      setMuted(false);
+      onMicEnabled?.();
+      console.log('[AudioControls] Mic enabled successfully');
+    } catch (error: any) {
+      const errorMsg = error?.message || 'Failed to enable microphone';
+      console.error('[AudioControls] Enable mic failed:', error);
+      onError?.(errorMsg);
+    } finally {
+      setIsEnabling(false);
     }
   };
 
-  const toggleMute = async () => {
-    try {
-      const stream = await initLocalAudio();
-      if (stream) {
-        for (const t of stream.getTracks()) t.enabled = muted;
-        setMuted(!muted);
-      }
-    } catch (e) {
-      console.error("toggle mute failed", e);
-    }
+  const toggleMute = () => {
+    const newMutedState = !muted;
+    setMuted(newMutedState);
+    setWebRTCMuted(newMutedState);
+    console.log('[AudioControls]', newMutedState ? 'Muted' : 'Unmuted');
   };
+
+  if (!hasMic) {
+    return (
+      <div className="flex items-center gap-2">
+        <button
+          onClick={enableMic}
+          disabled={isEnabling}
+          className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:bg-gray-400"
+        >
+          {isEnabling ? 'Enabling...' : 'Enable Mic'}
+        </button>
+        <span className="text-xs text-gray-500">Click to enable voice chat</span>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center gap-2">
-      {!hasMic ? (
-        <button
-          onClick={enable}
-          className="px-3 py-2 bg-indigo-600 text-white rounded"
-        >
-          Enable Mic
-        </button>
-      ) : (
-        <button
-          onClick={toggleMute}
-          className="px-3 py-2 bg-indigo-600 text-white rounded"
-        >
-          {muted ? "Unmute" : "Mute"}
-        </button>
-      )}
+      <button
+        onClick={toggleMute}
+        className={`px-4 py-2 rounded ${
+          muted 
+            ? 'bg-red-600 hover:bg-red-700 text-white' 
+            : 'bg-green-600 hover:bg-green-700 text-white'
+        }`}
+      >
+        {muted ? '🔇 Unmute' : '🎤 Mute'}
+      </button>
+      <span className="text-xs text-gray-500">
+        {muted ? 'Mic muted' : 'Mic active'}
+      </span>
     </div>
   );
 };

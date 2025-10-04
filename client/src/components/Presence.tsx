@@ -4,10 +4,9 @@ type User = { userId: string; username: string; socketId: string };
 
 import { emit } from "../lib/socket";
 
-const Presence: React.FC<{ users: User[]; meSocketId?: string; speakingMap?: Record<string, boolean> }> = ({
+const Presence: React.FC<{ users: User[]; meSocketId?: string }> = ({
   users,
   meSocketId,
-  speakingMap = {},
 }) => {
   return (
     <div>
@@ -16,10 +15,6 @@ const Presence: React.FC<{ users: User[]; meSocketId?: string; speakingMap?: Rec
         {users.map((u) => (
           <li key={u.socketId} className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span
-                className={`w-2 h-2 rounded-full inline-block ${speakingMap[u.socketId] ? 'bg-green-500' : 'bg-red-500'}`}
-                title={speakingMap[u.socketId] ? 'Speaking' : 'Silent'}
-              ></span>
               <div className="w-8 h-8 rounded-full bg-indigo-200 flex items-center justify-center text-indigo-800 font-medium">
                 {u.username?.[0] ?? "?"}
               </div>
