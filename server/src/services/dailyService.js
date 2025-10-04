@@ -1,7 +1,35 @@
-const fetch = require("node-fetch");
+const https = require("https");
 
 const DAILY_API_KEY = process.env.DAILY_API_KEY;
 const DAILY_API_BASE = "https://api.daily.co/v1";
+
+/**
+ * Make an HTTPS request
+ */
+function makeRequest(url, options) {
+  return new Promise((resolve, reject) => {
+    const req = https.request(url, options, (res) => {
+      let data = "";
+      res.on("data", (chunk) => {
+        data += chunk;
+      });
+      res.on("end", () => {
+        resolve({
+          ok: res.statusCode >= 200 && res.statusCode < 300,
+          status: res.statusCode,
+          statusText: res.statusMessage,
+          json: async () => JSON.parse(data),
+          text: async () => data,
+        });
+      });
+    });
+    req.on("error", reject);
+    if (options.body) {
+      req.write(options.body);
+    }
+    req.end();
+  });
+}
 
 /**
  * Create a Daily.co room for a given room ID
@@ -10,41 +38,56 @@ const DAILY_API_BASE = "https://api.daily.co/v1";
  */
 async function createDailyRoom(roomId) {
   if (!DAILY_API_KEY) {
+    console.error("[Daily] DAILY_API_KEY is not set!");
     throw new Error("DAILY_API_KEY is not set in environment variables");
   }
 
+  console.log("[Daily] Creating room:", roomId);
+
   try {
-    const response = await fetch(`${DAILY_API_BASE}/rooms`, {
+    const body = JSON.stringify({
+      name: roomId,
+      privacy: "public",
+      properties: {
+        enable_chat: false,
+        enable_screenshare: false,
+        start_video_off: true,
+        start_audio_off: false,
+        exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24, // 24 hours from now
+      },
+    });
+
+    const response = await makeRequest(`${DAILY_API_BASE}/rooms`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${DAILY_API_KEY}`,
+        "Authorization": `Bearer ${DAILY_API_KEY}`,
+        "Content-Length": Buffer.byteLength(body),
       },
-      body: JSON.stringify({
-        name: roomId,
-        privacy: "public",
-        properties: {
-          enable_chat: false,
-          enable_screenshare: false,
-          enable_recording: "cloud",
-          start_video_off: true,
-          start_audio_off: false,
-          exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24, // 24 hours from now
-        },
-      }),
+      body: body,
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const errorText = await response.text();
+      console.error("[Daily] API error response:", response.status, errorText);
+      
+      let error;
+      try {
+        error = JSON.parse(errorText);
+      } catch (e) {
+        throw new Error(`Daily API error: ${response.status} ${response.statusText}`);
+      }
+      
       // If room already exists, try to get it
       if (error.info === "room-name-already-exists") {
+        console.log("[Daily] Room already exists, fetching existing room");
         return await getDailyRoom(roomId);
       }
       throw new Error(`Daily API error: ${error.error || response.statusText}`);
     }
 
     const data = await response.json();
-    console.log("[Daily] Created room:", data.name);
+    console.log("[Daily] Created room successfully:", data.name);
     return {
       url: data.url,
       name: data.name,
@@ -66,7 +109,7 @@ async function getDailyRoom(roomId) {
   }
 
   try {
-    const response = await fetch(`${DAILY_API_BASE}/rooms/${roomId}`, {
+    const response = await makeRequest(`${DAILY_API_BASE}/rooms/${roomId}`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${DAILY_API_KEY}`,
@@ -98,7 +141,7 @@ async function deleteDailyRoom(roomId) {
   }
 
   try {
-    const response = await fetch(`${DAILY_API_BASE}/rooms/${roomId}`, {
+    const response = await makeRequest(`${DAILY_API_BASE}/rooms/${roomId}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${DAILY_API_KEY}`,
