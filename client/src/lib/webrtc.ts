@@ -143,18 +143,18 @@ export async function handleIceCandidate(
 
 export function cleanup(): void {
   console.log("[webrtc] Cleaning up all connections");
-  
+
   pcMap.forEach((pc, socketId) => {
     console.log("[webrtc] Closing connection to", socketId);
     pc.close();
   });
   pcMap.clear();
-  
+
   if (localStream) {
     localStream.getTracks().forEach((track) => track.stop());
     localStream = null;
   }
-  
+
   console.log("[webrtc] Cleanup complete");
 }
 

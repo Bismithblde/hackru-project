@@ -7,6 +7,7 @@ const morgan = require("morgan");
 const { Server } = require("socket.io");
 const { createRoomService } = require("./services/roomService");
 const { createSocketController } = require("./controllers/socketController");
+const { createDailyRoom } = require("./services/dailyService");
 
 const PORT = process.env.PORT || 4000;
 
@@ -17,6 +18,18 @@ app.use(express.json());
 app.use(morgan("dev"));
 
 app.get("/", (req, res) => res.json({ status: "ok", time: Date.now() }));
+
+// Daily.co room endpoint
+app.get("/api/daily-room/:roomId", async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    const room = await createDailyRoom(roomId);
+    res.json(room);
+  } catch (error) {
+    console.error("Failed to create Daily room:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 const server = http.createServer(app);
 

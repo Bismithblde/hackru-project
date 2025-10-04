@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { initLocalAudio, setMuted as setWebRTCMuted } from "../lib/webrtc";
+import { setMicEnabled } from "../lib/daily";
 
 interface AudioControlsProps {
   onMicEnabled?: () => void;
@@ -17,7 +17,7 @@ const AudioControls: React.FC<AudioControlsProps> = ({
   const enableMic = async () => {
     setIsEnabling(true);
     try {
-      await initLocalAudio();
+      await setMicEnabled(true);
       setHasMic(true);
       setMuted(false);
       onMicEnabled?.();
@@ -31,10 +31,10 @@ const AudioControls: React.FC<AudioControlsProps> = ({
     }
   };
 
-  const toggleMute = () => {
+  const toggleMute = async () => {
     const newMutedState = !muted;
     setMuted(newMutedState);
-    setWebRTCMuted(newMutedState);
+    await setMicEnabled(!newMutedState);
     console.log("[AudioControls]", newMutedState ? "Muted" : "Unmuted");
   };
 

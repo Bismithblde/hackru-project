@@ -27,6 +27,7 @@ const Room: React.FC = () => {
     Array<{ userId: string; username: string; points: number }>
   >([]);
 
+  const [hasMic, setHasMic] = useState(false);
   const [dailyRoomUrl, setDailyRoomUrl] = useState<string | null>(null);
 
   // Fetch Daily room URL when component mounts
@@ -108,6 +109,7 @@ const Room: React.FC = () => {
           console.error("[Daily] Error:", error);
         },
       });
+      setHasMic(true);
       console.log("[Room] Successfully joined Daily room");
     } catch (error) {
       console.error("[Room] Failed to join Daily room:", error);
@@ -159,14 +161,14 @@ const Room: React.FC = () => {
                 }}
               />
             </div>
-            <Presence users={users} meSocketId={meSocket.current ?? ""} />
+            <Presence users={users} mySocketId={meSocket.current ?? ""} />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="md:col-span-2">
               <Chat
                 messages={messages}
-                onSend={(msg: string) => {
+                onSendMessage={(msg: string) => {
                   if (msg.trim()) {
                     emit("chat:message", {
                       userId: userIdRef.current,
@@ -178,7 +180,7 @@ const Room: React.FC = () => {
               />
             </div>
             <div>
-              <Leaderboard entries={leaderboard} />
+              <Leaderboard leaderboard={leaderboard} />
               <button
                 onClick={() => {
                   emit("game:answer", {
