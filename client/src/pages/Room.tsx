@@ -18,7 +18,7 @@ const Room: React.FC = () => {
   const [username, setUsername] = useState<string | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [messages, setMessages] = useState<
-    Array<{ userId: string; message: string; ts: number }>
+    Array<{ userId: string; username?: string; message: string; ts: number }>
   >([]);
   const meSocket = useRef<string | null>(null);
   const userIdRef = useRef<string>(uuidv4());
@@ -147,50 +147,73 @@ const Room: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-slate-800">Room {roomId}</h2>
-        <Link to="/rooms" className="text-sm text-indigo-600 hover:underline">
-          Back to rooms
-        </Link>
-      </div>
+    <div className="min-h-screen bg-slate-50 p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between bg-white rounded-lg border border-slate-200 p-6">
+          <div>
+            <h2 className="text-3xl font-bold text-slate-900">
+              Study Room {roomId}
+            </h2>
+            <p className="text-sm text-slate-600 mt-1">Collaborate and learn together</p>
+          </div>
+          <Link 
+            to="/rooms" 
+            className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors flex items-center gap-2"
+          >
+            <span>←</span> Back to rooms
+          </Link>
+        </div>
 
       {!username ? (
-        <div className="p-6 bg-white border rounded-md">
+        <div className="bg-white rounded-lg border border-slate-200 p-8 max-w-md mx-auto">
+          <div className="text-center mb-6">
+            <div className="w-16 h-16 bg-indigo-600 rounded-lg mx-auto mb-4 flex items-center justify-center">
+              <span className="text-3xl">👤</span>
+            </div>
+            <h3 className="text-2xl font-bold text-slate-900">Join the Study Room</h3>
+            <p className="text-slate-600 mt-2">Enter your name to get started</p>
+          </div>
           <label className="block">
-            <div className="text-sm font-medium mb-2">Enter display name</div>
             <input
-              className="px-3 py-2 border rounded w-full"
+              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all"
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   const val = (e.target as HTMLInputElement).value.trim();
                   if (val) setUsername(val);
                 }
               }}
-              placeholder="Enter your display name and press Enter"
+              placeholder="Enter your display name..."
+              autoFocus
             />
           </label>
         </div>
       ) : (
         <>
-          <div className="p-4 bg-white border rounded-md">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <div className="text-sm font-medium">
-                  Logged in as: <strong>{username}</strong>
+          {/* User Info & Voice Controls */}
+          <div className="bg-white rounded-lg border border-slate-200 p-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-indigo-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white text-xl font-bold">{username[0].toUpperCase()}</span>
                 </div>
-                <div className="text-xs text-gray-500">
-                  User ID: {userIdRef.current.slice(0, 8)}...
+                <div>
+                  <div className="text-lg font-semibold text-slate-900">
+                    {username}
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    ID: {userIdRef.current.slice(0, 8)}...
+                  </div>
                 </div>
               </div>
-              <div>
+              <div className="flex flex-col items-end gap-2">
                 {dailyRoomError && (
-                  <div className="text-xs text-red-600 mb-2">
+                  <div className="text-xs text-red-600 bg-red-50 px-3 py-1 rounded-lg border border-red-200">
                     Voice chat error: {dailyRoomError}
                   </div>
                 )}
                 {!dailyRoomUrl && !dailyRoomError && (
-                  <div className="text-xs text-gray-500 mb-2">
+                  <div className="text-xs text-slate-600 bg-slate-100 px-3 py-1 rounded-lg">
                     Loading voice chat...
                   </div>
                 )}
@@ -203,17 +226,29 @@ const Room: React.FC = () => {
                 />
               </div>
             </div>
-            <Presence users={users} meSocketId={meSocket.current ?? ""} />
+            
+            {/* Participants Section */}
+            <div className="mt-6 pt-6 border-t border-slate-200">
+              <Presence users={users} meSocketId={meSocket.current ?? ""} />
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="md:col-span-2">
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Chat Section */}
+            <div className="lg:col-span-2 bg-white rounded-lg border border-slate-200 p-6">
+              <h3 className="text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                <span>💬</span> Chat
+              </h3>
               <Chat
                 messages={messages}
+                currentUserId={userIdRef.current}
                 onSend={(msg: string) => {
                   if (msg.trim()) {
                     emit("chat:message", {
+                      roomId: roomId,
                       userId: userIdRef.current,
+                      username: username,
                       message: msg.trim(),
                       ts: Date.now(),
                     });
@@ -221,19 +256,31 @@ const Room: React.FC = () => {
                 }}
               />
             </div>
-            <div>
-              <Leaderboard entries={leaderboard} />
-              <button
-                onClick={() => {
-                  emit("game:answer", {
-                    userId: userIdRef.current,
-                    answer: Math.floor(Math.random() * 100).toString(),
-                  });
-                }}
-                className="mt-4 w-full px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
-              >
-                Submit Random Answer (test)
-              </button>
+
+            {/* Leaderboard & Actions */}
+            <div className="space-y-6">
+              <div className="bg-white rounded-lg border border-slate-200 p-6">
+                <h3 className="text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                  <span>🏆</span> Leaderboard
+                </h3>
+                <Leaderboard entries={leaderboard} />
+              </div>
+              
+              <div className="bg-slate-900 rounded-lg p-6 text-white">
+                <h3 className="text-lg font-semibold mb-2">Quick Actions</h3>
+                <p className="text-sm text-slate-400 mb-4">Test game features</p>
+                <button
+                  onClick={() => {
+                    emit("game:answer", {
+                      userId: userIdRef.current,
+                      answer: Math.floor(Math.random() * 100).toString(),
+                    });
+                  }}
+                  className="w-full px-4 py-3 bg-white text-slate-900 rounded-lg hover:bg-slate-100 transition-colors font-medium"
+                >
+                  Submit Random Answer
+                </button>
+              </div>
             </div>
           </div>
         </>
@@ -241,6 +288,7 @@ const Room: React.FC = () => {
       
       {/* Daily.co iframe container - will appear at bottom right when voice chat is active */}
       <div ref={dailyContainerRef} id="daily-iframe-container"></div>
+      </div>
     </div>
   );
 };

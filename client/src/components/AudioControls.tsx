@@ -40,36 +40,40 @@ const AudioControls: React.FC<AudioControlsProps> = ({
 
   if (!hasMic) {
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         <button
           onClick={enableMic}
           disabled={isEnabling}
-          className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:bg-gray-400"
+          className="px-6 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:bg-slate-400 transition-colors font-medium flex items-center gap-2"
         >
-          {isEnabling ? "Enabling..." : "Enable Mic"}
+          <span>🎤</span>
+          {isEnabling ? "Connecting..." : "Enable Voice Chat"}
         </button>
-        <span className="text-xs text-gray-500">
-          Click to enable voice chat
-        </span>
       </div>
     );
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-3">
       <button
         onClick={toggleMute}
-        className={`px-4 py-2 rounded ${
+        className={`px-6 py-2.5 rounded-lg transition-colors font-medium flex items-center gap-2 ${
           muted
             ? "bg-red-600 hover:bg-red-700 text-white"
             : "bg-green-600 hover:bg-green-700 text-white"
         }`}
       >
-        {muted ? "🔇 Unmute" : "🎤 Mute"}
+        <span>{muted ? "🔇" : "🎤"}</span>
+        {muted ? "Unmute" : "Mute"}
       </button>
-      <span className="text-xs text-gray-500">
-        {muted ? "Mic muted" : "Mic active"}
-      </span>
+      <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${
+        muted ? "bg-red-50 text-red-700 border border-red-200" : "bg-green-50 text-green-700 border border-green-200"
+      }`}>
+        <div className={`w-2 h-2 rounded-full ${muted ? "bg-red-500" : "bg-green-500 animate-pulse"}`}></div>
+        <span className="text-xs font-medium">
+          {muted ? "Muted" : "Active"}
+        </span>
+      </div>
     </div>
   );
 };

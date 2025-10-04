@@ -8,21 +8,34 @@ const App: React.FC = () => {
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-slate-50">
-        <header className="bg-white border-b">
-          <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-            <h1 className="text-lg font-semibold text-slate-800">HackRU</h1>
-            <nav className="flex gap-4">
-              <Link to="/" className="text-slate-600 hover:text-slate-900">
+        <header className="bg-white border-b sticky top-0 z-50">
+          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <Link to="/" className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
+                <span className="text-white text-xl font-bold">📚</span>
+              </div>
+              <h1 className="text-2xl font-bold text-slate-900">
+                StudyBunny
+              </h1>
+            </Link>
+            <nav className="flex gap-6">
+              <Link 
+                to="/" 
+                className="text-slate-600 hover:text-slate-900 font-medium transition-colors"
+              >
                 Home
               </Link>
-              <Link to="/rooms" className="text-slate-600 hover:text-slate-900">
+              <Link 
+                to="/rooms" 
+                className="text-slate-600 hover:text-slate-900 font-medium transition-colors"
+              >
                 Rooms
               </Link>
             </nav>
           </div>
         </header>
 
-        <main className="max-w-4xl mx-auto p-6">
+        <main className="max-w-7xl mx-auto">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/rooms" element={<Rooms />} />
