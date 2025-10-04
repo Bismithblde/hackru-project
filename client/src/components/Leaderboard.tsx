@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 type Entry = { userId: string; username: string; points: number };
 

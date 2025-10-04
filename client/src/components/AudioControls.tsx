@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { initLocalAudio } from '../lib/webrtc';
+import React, { useState } from "react";
+import { initLocalAudio } from "../lib/webrtc";
 
 const AudioControls: React.FC<{ onReady?: () => void }> = ({ onReady }) => {
   const [muted, setMuted] = useState(true);
@@ -14,7 +14,7 @@ const AudioControls: React.FC<{ onReady?: () => void }> = ({ onReady }) => {
         onReady && onReady();
       }
     } catch (e) {
-      console.error('microphone denied', e);
+      console.error("microphone denied", e);
     }
   };
 
@@ -26,19 +26,25 @@ const AudioControls: React.FC<{ onReady?: () => void }> = ({ onReady }) => {
         setMuted(!muted);
       }
     } catch (e) {
-      console.error('toggle mute failed', e);
+      console.error("toggle mute failed", e);
     }
   };
 
   return (
     <div className="flex items-center gap-2">
       {!hasMic ? (
-        <button onClick={enable} className="px-3 py-2 bg-indigo-600 text-white rounded">
+        <button
+          onClick={enable}
+          className="px-3 py-2 bg-indigo-600 text-white rounded"
+        >
           Enable Mic
         </button>
       ) : (
-        <button onClick={toggleMute} className="px-3 py-2 bg-indigo-600 text-white rounded">
-          {muted ? 'Unmute' : 'Mute'}
+        <button
+          onClick={toggleMute}
+          className="px-3 py-2 bg-indigo-600 text-white rounded"
+        >
+          {muted ? "Unmute" : "Mute"}
         </button>
       )}
     </div>

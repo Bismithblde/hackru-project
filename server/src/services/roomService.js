@@ -71,7 +71,15 @@ function createRoomService() {
     return arr.slice(0, top);
   }
 
-  return { rooms, addUser, removeUser, removeUserBySocket, getUsers, addPoints, getLeaderboard };
+  return {
+    rooms,
+    addUser,
+    removeUser,
+    removeUserBySocket,
+    getUsers,
+    addPoints,
+    getLeaderboard,
+  };
 }
 
 module.exports = { createRoomService };

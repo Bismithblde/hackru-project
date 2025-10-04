@@ -35,6 +35,15 @@ const Chat: React.FC<{
           ref={inputRef}
           className="flex-1 px-3 py-2 border rounded"
           placeholder="Message"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              const v = inputRef.current?.value?.trim();
+              if (v) {
+                onSend(v);
+                if (inputRef.current) inputRef.current.value = "";
+              }
+            }
+          }}
         />
         <button
           onClick={() => {
