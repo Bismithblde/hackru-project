@@ -10,10 +10,14 @@ const { createSocketController } = require("./controllers/socketController");
 const { createDailyRoom } = require("./services/dailyService");
 
 const PORT = process.env.PORT || 4000;
+const CORS_ORIGIN = process.env.CORS_ALLOWED_ORIGINS || "*";
 
 const app = express();
 app.use(helmet());
-app.use(cors());
+app.use(cors({
+  origin: CORS_ORIGIN,
+  credentials: true,
+}));
 app.use(express.json());
 app.use(morgan("dev"));
 
@@ -35,8 +39,9 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: process.env.CORS_ALLOWED_ORIGINS || "*",
+    origin: CORS_ORIGIN,
     methods: ["GET", "POST"],
+    credentials: true,
   },
 });
 
@@ -49,5 +54,6 @@ io.on("connection", (socket) => {
 
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Server listening on port ${PORT}`);
+  console.log(`CORS allowed origins: ${CORS_ORIGIN}`);
   console.log(`Network access: http://192.168.40.38:${PORT}`);
 });

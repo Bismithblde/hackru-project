@@ -161,14 +161,14 @@ const Room: React.FC = () => {
                 }}
               />
             </div>
-            <Presence users={users} mySocketId={meSocket.current ?? ""} />
+            <Presence users={users} meSocketId={meSocket.current ?? ""} />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="md:col-span-2">
               <Chat
                 messages={messages}
-                onSendMessage={(msg: string) => {
+                onSend={(msg: string) => {
                   if (msg.trim()) {
                     emit("chat:message", {
                       userId: userIdRef.current,
@@ -180,7 +180,7 @@ const Room: React.FC = () => {
               />
             </div>
             <div>
-              <Leaderboard leaderboard={leaderboard} />
+              <Leaderboard entries={leaderboard} />
               <button
                 onClick={() => {
                   emit("game:answer", {
