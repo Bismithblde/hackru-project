@@ -8,7 +8,9 @@ const { Server } = require("socket.io");
 const { connectDB, disconnectDB } = require("./config/database");
 const { closeRedis } = require("./config/redis"); // Initialize Redis
 const { createRoomService } = require("./services/roomService");
-const { createPersistentSocketController } = require("./controllers/persistentSocketController");
+const {
+  createPersistentSocketController,
+} = require("./controllers/persistentSocketController");
 const { createDailyRoom } = require("./services/dailyService");
 const { roomRouter } = require("./routes/roomRoutes");
 const {
@@ -73,12 +75,6 @@ const io = new Server(server, {
 });
 
 const roomService = createRoomService();
-
-// Register Pomodoro cleanup when rooms become empty
-const { cleanupRoomPomodoro } = require("./controllers/pomodoroController");
-roomService.onRoomEmpty((roomId) => {
-  cleanupRoomPomodoro(roomId);
-});
 
 const socketController = createPersistentSocketController(io, roomService);
 

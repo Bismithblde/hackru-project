@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { getSocket, on, off, emit } from "../lib/socket";
 
 interface QuizQuestion {
   id: string;
@@ -7,64 +8,202 @@ interface QuizQuestion {
   correctAnswer: number;
 }
 
-// Placeholder quiz data - replace with real data later
-const PLACEHOLDER_QUIZ: QuizQuestion[] = [
-  {
-    id: "1",
-    question: "What is the capital of France?",
-    options: ["London", "Berlin", "Paris", "Madrid"],
-    correctAnswer: 2,
-  },
-  {
-    id: "2",
-    question: "Which planet is known as the Red Planet?",
-    options: ["Venus", "Mars", "Jupiter", "Saturn"],
-    correctAnswer: 1,
-  },
-  {
-    id: "3",
-    question: "What is 2 + 2?",
-    options: ["3", "4", "5", "6"],
-    correctAnswer: 1,
-  },
-];
-
-interface QuizProps {
-  onSubmitAnswer?: (questionId: string, answer: number) => void;
+interface Quiz {
+  id: string;
+  title: string;
+  questions: QuizQuestion[];
+  createdBy: string;
 }
 
-const Quiz: React.FC<QuizProps> = ({ onSubmitAnswer }) => {
+interface QuizProps {
+  roomId: string;
+  username: string;
+  isOwner: boolean;
+}
+
+const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
+  const [activeQuiz, setActiveQuiz] = useState<Quiz | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
   const [answered, setAnswered] = useState(false);
+  const [userAnswers, setUserAnswers] = useState<Record<string, number>>({});
 
-  const currentQuestion = PLACEHOLDER_QUIZ[currentQuestionIndex];
-  const isLastQuestion = currentQuestionIndex === PLACEHOLDER_QUIZ.length - 1;
+  // Quiz creation form state
+  const [quizTitle, setQuizTitle] = useState("");
+  const [questions, setQuestions] = useState<QuizQuestion[]>([
+    {
+      id: "1",
+      question: "",
+      options: ["", "", "", ""],
+      correctAnswer: 0,
+    },
+  ]);
+
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket) return;
+
+    // Listen for quiz events
+    const handleQuizCreated = (data: any) => {
+      console.log("[Quiz] Quiz created:", data);
+      setActiveQuiz(data.quiz);
+      setShowCreateForm(false);
+    };
+
+    const handleQuizStarted = (data: any) => {
+      console.log("[Quiz] Quiz started:", data);
+      setActiveQuiz(data.quiz);
+      setCurrentQuestionIndex(0);
+      setScore(0);
+      setShowResult(false);
+      setUserAnswers({});
+    };
+
+    const handleQuizEnded = (data: any) => {
+      console.log("[Quiz] Quiz ended:", data);
+      setActiveQuiz(null);
+      setShowResult(false);
+    };
+
+    const handleAnswerSubmitted = (data: any) => {
+      console.log("[Quiz] Answer submitted:", data);
+    };
+
+    on("quiz:created", handleQuizCreated);
+    on("quiz:started", handleQuizStarted);
+    on("quiz:ended", handleQuizEnded);
+    on("quiz:answerSubmitted", handleAnswerSubmitted);
+
+    // Request current quiz state
+    emit("quiz:getState", { roomId });
+
+    return () => {
+      off("quiz:created", handleQuizCreated);
+      off("quiz:started", handleQuizStarted);
+      off("quiz:ended", handleQuizEnded);
+      off("quiz:answerSubmitted", handleAnswerSubmitted);
+    };
+  }, [roomId]);
+
+  const handleCreateQuiz = () => {
+    if (!quizTitle.trim()) {
+      alert("Please enter a quiz title");
+      return;
+    }
+
+    // Validate questions
+    for (let i = 0; i < questions.length; i++) {
+      const q = questions[i];
+      if (!q.question.trim()) {
+        alert(`Please enter question ${i + 1}`);
+        return;
+      }
+      if (q.options.some((opt) => !opt.trim())) {
+        alert(`Please fill all options for question ${i + 1}`);
+        return;
+      }
+    }
+
+    const quiz: Quiz = {
+      id: Date.now().toString(),
+      title: quizTitle,
+      questions: questions,
+      createdBy: username,
+    };
+
+    emit("quiz:create", { roomId, quiz });
+  };
+
+  const handleStartQuiz = () => {
+    if (!activeQuiz) return;
+    emit("quiz:start", { roomId, quizId: activeQuiz.id });
+  };
+
+  const handleEndQuiz = () => {
+    if (!activeQuiz) return;
+    emit("quiz:end", { roomId, quizId: activeQuiz.id });
+  };
+
+  const handleAddQuestion = () => {
+    setQuestions([
+      ...questions,
+      {
+        id: (questions.length + 1).toString(),
+        question: "",
+        options: ["", "", "", ""],
+        correctAnswer: 0,
+      },
+    ]);
+  };
+
+  const handleRemoveQuestion = (index: number) => {
+    if (questions.length === 1) {
+      alert("Quiz must have at least one question");
+      return;
+    }
+    setQuestions(questions.filter((_, i) => i !== index));
+  };
+
+  const handleQuestionChange = (
+    index: number,
+    field: keyof QuizQuestion,
+    value: any
+  ) => {
+    const newQuestions = [...questions];
+    newQuestions[index] = { ...newQuestions[index], [field]: value };
+    setQuestions(newQuestions);
+  };
+
+  const handleOptionChange = (
+    questionIndex: number,
+    optionIndex: number,
+    value: string
+  ) => {
+    const newQuestions = [...questions];
+    newQuestions[questionIndex].options[optionIndex] = value;
+    setQuestions(newQuestions);
+  };
 
   const handleSelectAnswer = (index: number) => {
     if (answered) return;
     setSelectedAnswer(index);
   };
 
-  const handleSubmit = () => {
-    if (selectedAnswer === null || answered) return;
+  const handleSubmitAnswer = () => {
+    if (selectedAnswer === null || answered || !activeQuiz) return;
 
+    const currentQuestion = activeQuiz.questions[currentQuestionIndex];
     setAnswered(true);
+
+    // Save user's answer
+    setUserAnswers({
+      ...userAnswers,
+      [currentQuestion.id]: selectedAnswer,
+    });
 
     // Check if answer is correct
     if (selectedAnswer === currentQuestion.correctAnswer) {
       setScore(score + 1);
     }
 
-    // Call callback if provided
-    if (onSubmitAnswer) {
-      onSubmitAnswer(currentQuestion.id, selectedAnswer);
-    }
+    // Emit answer to server
+    emit("quiz:submitAnswer", {
+      roomId,
+      quizId: activeQuiz.id,
+      questionId: currentQuestion.id,
+      answer: selectedAnswer,
+      username,
+    });
   };
 
-  const handleNext = () => {
+  const handleNextQuestion = () => {
+    if (!activeQuiz) return;
+    
+    const isLastQuestion = currentQuestionIndex === activeQuiz.questions.length - 1;
+    
     if (isLastQuestion) {
       setShowResult(true);
     } else {
@@ -74,17 +213,179 @@ const Quiz: React.FC<QuizProps> = ({ onSubmitAnswer }) => {
     }
   };
 
-  const handleRestart = () => {
+  const handleRestartQuiz = () => {
     setCurrentQuestionIndex(0);
     setSelectedAnswer(null);
     setShowResult(false);
     setScore(0);
     setAnswered(false);
+    setUserAnswers({});
   };
+
+  // Owner view - no quiz created yet
+  if (isOwner && !activeQuiz && !showCreateForm) {
+    return (
+      <div className="space-y-3">
+        <div className="text-center py-8 text-slate-500">
+          <div className="text-5xl mb-3">📝</div>
+          <p className="text-sm mb-4">No quiz created yet</p>
+          <button
+            onClick={() => setShowCreateForm(true)}
+            className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all transform hover:scale-[1.02] font-medium shadow-lg"
+          >
+            Create Quiz
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Owner view - quiz creation form
+  if (isOwner && showCreateForm) {
+    return (
+      <div className="space-y-4 max-h-[500px] overflow-y-auto">
+        <div className="sticky top-0 bg-gradient-to-br from-indigo-50 to-purple-50 p-4 rounded-lg border border-indigo-200 z-10">
+          <h4 className="font-semibold text-slate-900 mb-2">Create Quiz</h4>
+          <input
+            type="text"
+            placeholder="Quiz Title"
+            value={quizTitle}
+            onChange={(e) => setQuizTitle(e.target.value)}
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
+          />
+        </div>
+
+        {questions.map((q, qIndex) => (
+          <div
+            key={qIndex}
+            className="bg-white border border-slate-200 rounded-lg p-4 space-y-3"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Question {qIndex + 1}
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter question"
+                  value={q.question}
+                  onChange={(e) =>
+                    handleQuestionChange(qIndex, "question", e.target.value)
+                  }
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
+                />
+              </div>
+              {questions.length > 1 && (
+                <button
+                  onClick={() => handleRemoveQuestion(qIndex)}
+                  className="mt-7 px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors text-sm"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-slate-700">
+                Options (select correct answer)
+              </label>
+              {q.options.map((opt, optIndex) => (
+                <div key={optIndex} className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name={`correct-${qIndex}`}
+                    checked={q.correctAnswer === optIndex}
+                    onChange={() =>
+                      handleQuestionChange(qIndex, "correctAnswer", optIndex)
+                    }
+                    className="w-4 h-4 text-indigo-600"
+                  />
+                  <input
+                    type="text"
+                    placeholder={`Option ${optIndex + 1}`}
+                    value={opt}
+                    onChange={(e) =>
+                      handleOptionChange(qIndex, optIndex, e.target.value)
+                    }
+                    className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+
+        <button
+          onClick={handleAddQuestion}
+          className="w-full px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors font-medium border-2 border-dashed border-slate-300"
+        >
+          + Add Question
+        </button>
+
+        <div className="flex gap-3 sticky bottom-0 bg-gradient-to-br from-indigo-50 to-purple-50 p-4 rounded-lg border border-indigo-200">
+          <button
+            onClick={handleCreateQuiz}
+            className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all transform hover:scale-[1.02] font-medium shadow-lg"
+          >
+            Create Quiz
+          </button>
+          <button
+            onClick={() => setShowCreateForm(false)}
+            className="px-4 py-3 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Owner view - quiz created but not started
+  if (isOwner && activeQuiz && !showResult) {
+    return (
+      <div className="space-y-4">
+        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg p-6 border-2 border-indigo-200">
+          <div className="text-center">
+            <div className="text-5xl mb-3">📝</div>
+            <h4 className="text-xl font-bold text-slate-900 mb-2">
+              {activeQuiz.title}
+            </h4>
+            <p className="text-sm text-slate-600 mb-4">
+              {activeQuiz.questions.length} questions
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={handleStartQuiz}
+          className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all transform hover:scale-[1.02] font-medium shadow-lg"
+        >
+          Start Quiz for Everyone
+        </button>
+
+        <button
+          onClick={handleEndQuiz}
+          className="w-full px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+        >
+          Delete Quiz
+        </button>
+      </div>
+    );
+  }
+
+  // Non-owner view - no quiz available
+  if (!activeQuiz) {
+    return (
+      <div className="text-center py-8 text-slate-500">
+        <div className="text-5xl mb-3">📝</div>
+        <p className="text-sm">Waiting for room owner to create a quiz...</p>
+      </div>
+    );
+  }
 
   // Results view
   if (showResult) {
-    const percentage = Math.round((score / PLACEHOLDER_QUIZ.length) * 100);
+    const percentage = Math.round((score / activeQuiz.questions.length) * 100);
     return (
       <div className="space-y-4">
         <div className="text-center p-6 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg border-2 border-indigo-200">
@@ -95,33 +396,32 @@ const Quiz: React.FC<QuizProps> = ({ onSubmitAnswer }) => {
             Quiz Complete!
           </h3>
           <p className="text-4xl font-bold text-indigo-600 mb-2">
-            {score} / {PLACEHOLDER_QUIZ.length}
+            {score} / {activeQuiz.questions.length}
           </p>
           <p className="text-lg text-slate-600">{percentage}% correct</p>
         </div>
 
         <button
-          onClick={handleRestart}
+          onClick={handleRestartQuiz}
           className="w-full px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium shadow-lg"
         >
           Try Again
         </button>
-
-        <div className="text-xs text-center text-slate-500 italic">
-          ✨ Placeholder Quiz - Real content coming soon!
-        </div>
       </div>
     );
   }
 
-  // Quiz question view
+  // Quiz taking view
+  const currentQuestion = activeQuiz.questions[currentQuestionIndex];
+  const isLastQuestion = currentQuestionIndex === activeQuiz.questions.length - 1;
+
   return (
     <div className="space-y-4">
       {/* Progress Bar */}
       <div className="space-y-2">
         <div className="flex justify-between items-center text-sm">
           <span className="font-semibold text-slate-700">
-            Question {currentQuestionIndex + 1} of {PLACEHOLDER_QUIZ.length}
+            Question {currentQuestionIndex + 1} of {activeQuiz.questions.length}
           </span>
           <span className="text-slate-500">
             Score: {score}/{currentQuestionIndex}
@@ -132,7 +432,7 @@ const Quiz: React.FC<QuizProps> = ({ onSubmitAnswer }) => {
             className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500"
             style={{
               width: `${
-                ((currentQuestionIndex + 1) / PLACEHOLDER_QUIZ.length) * 100
+                ((currentQuestionIndex + 1) / activeQuiz.questions.length) * 100
               }%`,
             }}
           />
@@ -207,7 +507,7 @@ const Quiz: React.FC<QuizProps> = ({ onSubmitAnswer }) => {
       <div className="flex gap-3">
         {!answered ? (
           <button
-            onClick={handleSubmit}
+            onClick={handleSubmitAnswer}
             disabled={selectedAnswer === null}
             className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all shadow-lg ${
               selectedAnswer === null
@@ -219,20 +519,15 @@ const Quiz: React.FC<QuizProps> = ({ onSubmitAnswer }) => {
           </button>
         ) : (
           <button
-            onClick={handleNext}
+            onClick={handleNextQuestion}
             className="flex-1 px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all font-medium shadow-lg"
           >
             {isLastQuestion ? "See Results →" : "Next Question →"}
           </button>
         )}
       </div>
-
-      {/* Placeholder Notice */}
-      <div className="text-xs text-center text-slate-500 italic">
-        ✨ Placeholder Quiz - Real content coming soon!
-      </div>
     </div>
   );
 };
 
-export default Quiz;
+export default QuizComponent;

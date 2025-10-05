@@ -1,6 +1,7 @@
 const { requireFields } = require("../utils/validator");
 const persistentRoomService = require("../services/persistentRoomService");
 const { isRedisAvailable } = require("../config/redis");
+const { registerQuizEvents } = require("./quizController");
 
 /**
  * Enhanced Socket Controller with Redis Persistence
@@ -9,6 +10,9 @@ const { isRedisAvailable } = require("../config/redis");
 function createPersistentSocketController(io, roomService) {
   function register(socket) {
     let lastAwardTs = 0;
+
+    // Register Quiz events
+    registerQuizEvents(socket, io);
 
     /**
      * Join room event - Enhanced with Redis persistence
@@ -103,7 +107,7 @@ function createPersistentSocketController(io, roomService) {
     });
 
     /**
-     * Chat message event - Enhanced with Redis persistence
+     * Chat message event - Broadcast immediately, persist async
      */
     socket.on("chat:message", async (payload = {}) => {
       const ok = requireFields(payload, ["roomId", "userId", "message"]);
@@ -111,30 +115,31 @@ function createPersistentSocketController(io, roomService) {
 
       const { roomId, userId, username, message, ts } = payload;
 
+      // Create message object
+      const out = {
+        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        userId,
+        username: username || "Anonymous",
+        message,
+        ts: ts || Date.now(),
+      };
+
+      // Broadcast immediately to all users in room
+      io.to(roomId).emit("chat:message", out);
+      console.log(`[Socket] Broadcast message to room ${roomId}:`, out);
+
+      // Try to persist to Redis async (non-blocking)
       try {
-        // Save message to Redis
-        const savedMessage = await persistentRoomService.saveMessage(roomId, {
-          userId,
-          username: username || "Anonymous",
-          message,
-          timestamp: ts || Date.now(),
+        await persistentRoomService.saveMessage(roomId, {
+          userId: out.userId,
+          username: out.username,
+          message: out.message,
+          timestamp: out.ts,
         });
-
-        // Broadcast to all users in room (including sender for confirmation)
-        const out = {
-          id: savedMessage.id,
-          userId: savedMessage.userId,
-          username: savedMessage.username,
-          message: savedMessage.message,
-          ts: savedMessage.timestamp,
-        };
-
-        io.to(roomId).emit("chat:message", out);
-
-        console.log(`[Socket] Message saved and broadcast in room ${roomId}`);
+        console.log(`[Socket] Message persisted to Redis`);
       } catch (error) {
-        console.error("[Socket] Error saving message:", error);
-        socket.emit("error", { message: "Failed to send message" });
+        console.error("[Socket] Failed to persist message (non-blocking):", error.message);
+        // Don't fail the broadcast if Redis fails
       }
     });
 

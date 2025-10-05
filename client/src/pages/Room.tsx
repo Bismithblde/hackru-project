@@ -373,15 +373,21 @@ const Room: React.FC = () => {
               <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg border border-slate-200 p-6">
                 <h3 className="text-lg font-semibold text-slate-900 mb-1 flex items-center gap-2">
                   <span>🎯</span> Study Quiz
+                  {roomData?.createdBy === username && (
+                    <span className="text-xs bg-indigo-600 text-white px-2 py-1 rounded ml-auto">
+                      Owner
+                    </span>
+                  )}
                 </h3>
                 <p className="text-sm text-slate-600 mb-4">
-                  Test your knowledge
+                  {roomData?.createdBy === username 
+                    ? "Create and manage quizzes" 
+                    : "Test your knowledge"}
                 </p>
                 <Quiz
-                  onSubmitAnswer={(questionId, answer) => {
-                    // TODO: Connect to backend/socket events
-                    console.log("Quiz answer:", questionId, answer);
-                  }}
+                  roomId={roomId}
+                  username={username || "Anonymous"}
+                  isOwner={roomData?.createdBy === username}
                 />
               </div>
             </div>
