@@ -29,7 +29,7 @@ const Room: React.FC = () => {
 
   // State to hide/show the meeting UI but keep the call running
   const [meetingHidden, setMeetingHidden] = useState(false);
-  
+
   // State to expand/collapse the whiteboard
   const [isWhiteboardExpanded, setIsWhiteboardExpanded] = useState(false);
 
@@ -326,14 +326,14 @@ const Room: React.FC = () => {
                         <span>⛶</span> Expand
                       </button>
                     )}
-                    {getSocket() ? (
+                    {getSocket() && !isWhiteboardExpanded ? (
                       <Whiteboard socket={getSocket()!} roomId={roomId} />
-                    ) : (
+                    ) : !getSocket() ? (
                       <div className="text-center text-slate-500">
                         <div className="text-4xl mb-4">🎨</div>
                         <p>Connecting to whiteboard...</p>
                       </div>
-                    )}
+                    ) : null}
                   </div>
                 )}
               </div>
