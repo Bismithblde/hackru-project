@@ -27,6 +27,8 @@ const Room: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"chat" | "whiteboard">("chat");
   const userIdRef = useRef<string>(uuidv4());
   const dailyContainerRef = useRef<HTMLDivElement>(null);
+  // For react-draggable strict mode compatibility
+  const draggableNodeRef = useRef<HTMLDivElement>(null);
 
   // Use custom hooks for room data and daily room
   const { users, messages, leaderboard, socketId } = useRoom({
@@ -316,10 +318,13 @@ const Room: React.FC = () => {
           </>
         )}
 
-        {/* Daily.co iframe container - now draggable */}
-        <Draggable defaultPosition={{ x: 100, y: 100 }} bounds="parent">
+        {/* Daily.co iframe container - now draggable and strict mode safe */}
+        <Draggable nodeRef={draggableNodeRef} defaultPosition={{ x: 100, y: 100 }} bounds="parent">
           <div
-            ref={dailyContainerRef}
+            ref={(el) => {
+              draggableNodeRef.current = el;
+              if (dailyContainerRef) dailyContainerRef.current = el;
+            }}
             id="daily-iframe-container"
             style={{
               position: "fixed",
