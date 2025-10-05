@@ -27,6 +27,9 @@ const Room: React.FC = () => {
   const userIdRef = useRef<string>(uuidv4());
   const dailyContainerRef = useRef<HTMLDivElement>(null);
 
+  // State to hide/show the meeting UI but keep the call running
+  const [meetingHidden, setMeetingHidden] = useState(false);
+
   // Use custom hooks for room data and daily room
   const { users, messages, leaderboard, socketId } = useRoom({
     roomId,
@@ -315,7 +318,15 @@ const Room: React.FC = () => {
           </>
         )}
 
-        {/* Daily.co meeting always visible below navbar */}
+        {/* Hide/Show Meeting Button */}
+        <button
+          onClick={() => setMeetingHidden((v) => !v)}
+          className="fixed top-6 right-6 z-50 px-4 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition-colors"
+        >
+          {meetingHidden ? "Show Meeting" : "Hide Meeting"}
+        </button>
+
+        {/* Daily.co meeting always visible below navbar, but can be hidden */}
         <div
           ref={dailyContainerRef}
           id="daily-iframe-container"
@@ -329,11 +340,11 @@ const Room: React.FC = () => {
             minWidth: 320,
             maxWidth: 600,
             minHeight: 400,
-            background: "white",
+            background: "transparent",
             borderRadius: 12,
             boxShadow: "0 4px 24px rgba(0,0,0,0.12)",
-            border: "2px solid #6366f1",
-            display: "flex",
+            border: "none",
+            display: meetingHidden ? "none" : "flex",
             flexDirection: "column",
             alignItems: "flex-end",
             padding: 0,
