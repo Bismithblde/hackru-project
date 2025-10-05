@@ -45,13 +45,14 @@ async function saveWhiteboard(req, res) {
 
     console.log(`✅ Whiteboard saved: ${whiteboardId}`);
 
+    // Use frontend URL for shareable link
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+
     res.json({
       success: true,
       whiteboardId,
       url: `/whiteboard/${whiteboardId}`,
-      shareableLink: `${req.protocol}://${req.get(
-        "host"
-      )}/whiteboard/${whiteboardId}`,
+      shareableLink: `${frontendUrl}/whiteboard/${whiteboardId}`,
     });
   } catch (error) {
     console.error("❌ Error saving whiteboard:", error);
