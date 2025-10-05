@@ -11,7 +11,6 @@ import Chat from "../components/Chat";
 import AudioControls from "../components/AudioControls";
 import Leaderboard from "../components/Leaderboard";
 import Whiteboard from "../components/Whiteboard";
-import Draggable from "react-draggable";
 
 const Room: React.FC = () => {
   const { code } = useParams();
@@ -27,8 +26,9 @@ const Room: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"chat" | "whiteboard">("chat");
   const userIdRef = useRef<string>(uuidv4());
   const dailyContainerRef = useRef<HTMLDivElement>(null);
-  // For react-draggable strict mode compatibility
-  const draggableNodeRef = useRef<HTMLDivElement>(null);
+
+  // Toggle for Daily popup
+  const [showDaily, setShowDaily] = useState(false);
 
   // Use custom hooks for room data and daily room
   const { users, messages, leaderboard, socketId } = useRoom({
@@ -318,23 +318,31 @@ const Room: React.FC = () => {
           </>
         )}
 
-        {/* Daily.co iframe container - now draggable and strict mode safe */}
-        <Draggable nodeRef={draggableNodeRef} defaultPosition={{ x: 100, y: 100 }} bounds="parent">
+        {/* Daily.co popup toggle button */}
+        <button
+          onClick={() => setShowDaily((v) => !v)}
+          className="fixed top-6 right-6 z-50 px-4 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition-colors"
+        >
+          {showDaily ? "Hide Meeting" : "Show Meeting"}
+        </button>
+
+        {/* Daily.co iframe container - togglable and hanging from the top */}
+        {showDaily && (
           <div
-            ref={(el) => {
-              draggableNodeRef.current = el;
-              if (dailyContainerRef) dailyContainerRef.current = el;
-            }}
+            ref={dailyContainerRef}
             id="daily-iframe-container"
             style={{
               position: "fixed",
               zIndex: 50,
-              bottom: 32,
+              top: 72,
               right: 32,
               minWidth: 320,
+              background: "white",
+              borderRadius: 12,
+              boxShadow: "0 4px 24px rgba(0,0,0,0.12)",
             }}
           />
-        </Draggable>
+        )}
       </div>
     </div>
   );
