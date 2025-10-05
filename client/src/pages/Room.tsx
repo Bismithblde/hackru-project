@@ -27,9 +27,6 @@ const Room: React.FC = () => {
   const userIdRef = useRef<string>(uuidv4());
   const dailyContainerRef = useRef<HTMLDivElement>(null);
 
-  // Toggle for Daily popup
-  const [showDaily, setShowDaily] = useState(true);
-
   // Use custom hooks for room data and daily room
   const { users, messages, leaderboard, socketId } = useRoom({
     roomId,
@@ -318,31 +315,38 @@ const Room: React.FC = () => {
           </>
         )}
 
-        {/* Daily.co popup toggle button */}
-        <button
-          onClick={() => setShowDaily((v) => !v)}
-          className="fixed top-6 right-6 z-50 px-4 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition-colors"
+        {/* Daily.co meeting always visible below navbar, with leave button */}
+        <div
+          ref={dailyContainerRef}
+          id="daily-iframe-container"
+          style={{
+            position: "fixed",
+            zIndex: 50,
+            top: 72,
+            left: 0,
+            right: 0,
+            margin: "0 auto",
+            minWidth: 320,
+            maxWidth: 600,
+            background: "white",
+            borderRadius: 12,
+            boxShadow: "0 4px 24px rgba(0,0,0,0.12)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-end",
+            padding: 0,
+          }}
         >
-          {showDaily ? "Hide Meeting" : "Show Meeting"}
-        </button>
-
-        {/* Daily.co iframe container - togglable and hanging from the top */}
-        {showDaily && (
-          <div
-            ref={dailyContainerRef}
-            id="daily-iframe-container"
-            style={{
-              position: "fixed",
-              zIndex: 50,
-              top: 72,
-              right: 32,
-              minWidth: 320,
-              background: "white",
-              borderRadius: 12,
-              boxShadow: "0 4px 24px rgba(0,0,0,0.12)",
+          <button
+            onClick={() => {
+              leaveDailyRoom();
+              // Optionally clear iframe or hide if you want
             }}
-          />
-        )}
+            className="m-2 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm"
+          >
+            Leave Meeting
+          </button>
+        </div>
       </div>
     </div>
   );
