@@ -80,15 +80,11 @@ export async function joinDailyRoom(
           showLeaveButton: true,
           showFullscreenButton: false,
           iframeStyle: {
-            position: "fixed",
-            bottom: "24px",
-            right: "24px",
-            width: "420px",
+            width: "100%",
             height: "320px",
             border: "none",
             borderRadius: "16px",
-            boxShadow:
-              "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+            boxShadow: "0 4px 24px rgba(0,0,0,0.12)",
             zIndex: "9999",
           },
         });

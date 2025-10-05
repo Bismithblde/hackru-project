@@ -315,7 +315,7 @@ const Room: React.FC = () => {
           </>
         )}
 
-        {/* Daily.co meeting always visible below navbar, with leave button */}
+        {/* Daily.co meeting always visible below navbar */}
         <div
           ref={dailyContainerRef}
           id="daily-iframe-container"
@@ -338,17 +338,7 @@ const Room: React.FC = () => {
             alignItems: "flex-end",
             padding: 0,
           }}
-        >
-          <button
-            onClick={() => {
-              leaveDailyRoom();
-              // Optionally clear iframe or hide if you want
-            }}
-            className="m-2 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm"
-          >
-            Leave Meeting
-          </button>
-        </div>
+        />
       </div>
     </div>
   );
