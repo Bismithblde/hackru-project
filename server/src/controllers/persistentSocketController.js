@@ -1,21 +1,17 @@
 const { requireFields } = require("../utils/validator");
 const persistentRoomService = require("../services/persistentRoomService");
 const { isRedisAvailable } = require("../config/redis");
-const { registerPomodoroEvents, cleanupRoomPomodoro } = require("./pomodoroController");
+const { registerPomodoroEvents } = require("./pomodoroController");
 
 /**
  * Enhanced Socket Controller with Redis Persistence
  * Integrates real-time events with persistent storage
  */
 function createPersistentSocketController(io, roomService) {
-  // Track study time for automatic points
-  const studyTimers = new Map(); // roomId -> Map(userId -> startTime)
-
   function register(socket) {
-    let lastAwardTs = 0;
-
     // Register Pomodoro events
     registerPomodoroEvents(socket, io);
+    let lastAwardTs = 0;
 
     /**
      * Join room event - Enhanced with Redis persistence
@@ -25,12 +21,10 @@ function createPersistentSocketController(io, roomService) {
       if (!ok) return socket.emit("error", { message: "invalid join payload" });
 
       const { roomId, userId, username } = payload;
-      console.log(`[Socket] User ${username} (socket: ${socket.id}) joining room ${roomId}`);
 
       try {
         // Join Socket.io room
         socket.join(roomId);
-        console.log(`[Socket] Socket ${socket.id} joined Socket.io room ${roomId}`);
 
         // Add to in-memory room service (for presence)
         roomService.addUser(roomId, { socketId: socket.id, userId, username });
@@ -77,13 +71,6 @@ function createPersistentSocketController(io, roomService) {
         // Broadcast presence update to all users in room
         const users = roomService.getUsers(roomId);
         io.to(roomId).emit("presence:update", users);
-
-        // Start study timer
-        if (!studyTimers.has(roomId)) {
-          studyTimers.set(roomId, new Map());
-        }
-        studyTimers.get(roomId).set(userId, Date.now());
-        console.log(`[Points] Started study timer for ${username}`);
       } catch (error) {
         console.error("[Socket] Error in join handler:", error);
         socket.emit("error", { message: "Failed to join room" });
@@ -112,29 +99,6 @@ function createPersistentSocketController(io, roomService) {
         const users = roomService.getUsers(roomId);
         io.to(roomId).emit("presence:update", users);
 
-        // Calculate study time and award points
-        if (userId && studyTimers.has(roomId)) {
-          const roomTimers = studyTimers.get(roomId);
-          if (roomTimers.has(userId)) {
-            const startTime = roomTimers.get(userId);
-            const studyMinutes = Math.floor((Date.now() - startTime) / 60000);
-            
-            if (studyMinutes >= 1) {
-              // Award 1 point per minute of study
-              const pointsEarned = studyMinutes;
-              roomService.addPoints(roomId, userId, "Study Session", pointsEarned);
-              
-              const leaderboard = roomService.getLeaderboard(roomId);
-              io.to(roomId).emit("points:update", { roomId, leaderboard });
-              
-              console.log(`[Points] Awarded ${pointsEarned} points to ${userId} for ${studyMinutes} minutes`);
-            }
-            
-            roomTimers.delete(userId);
-            if (roomTimers.size === 0) studyTimers.delete(roomId);
-          }
-        }
-
         console.log(`[Socket] User ${userId} left room ${roomId}`);
       } catch (error) {
         console.error("[Socket] Error in leave handler:", error);
@@ -142,35 +106,39 @@ function createPersistentSocketController(io, roomService) {
     });
 
     /**
-     * Chat message event - Simplified without Redis persistence
+     * Chat message event - Enhanced with Redis persistence
      */
-    socket.on("chat:message", (payload = {}) => {
-      console.log("[Socket] Received chat:message event:", payload);
-      
+    socket.on("chat:message", async (payload = {}) => {
       const ok = requireFields(payload, ["roomId", "userId", "message"]);
-      if (!ok) {
-        console.error("[Socket] Invalid chat payload - missing required fields");
-        return;
-      }
+      if (!ok) return;
 
       const { roomId, userId, username, message, ts } = payload;
-      console.log(`[Socket] Processing message from ${username} (${userId}) in room ${roomId}`);
 
-      // Prepare message object
-      const out = {
-        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        userId,
-        username: username || "Anonymous",
-        message,
-        ts: ts || Date.now(),
-      };
+      try {
+        // Save message to Redis
+        const savedMessage = await persistentRoomService.saveMessage(roomId, {
+          userId,
+          username: username || "Anonymous",
+          message,
+          timestamp: ts || Date.now(),
+        });
 
-      console.log(`[Socket] Broadcasting message to room ${roomId}:`, out);
-      
-      // Broadcast to all users in the room (including sender)
-      io.to(roomId).emit("chat:message", out);
-      
-      console.log(`[Socket] Message broadcast complete for room ${roomId}`);
+        // Broadcast to all users in room (including sender for confirmation)
+        const out = {
+          id: savedMessage.id,
+          userId: savedMessage.userId,
+          username: savedMessage.username,
+          message: savedMessage.message,
+          ts: savedMessage.timestamp,
+        };
+
+        io.to(roomId).emit("chat:message", out);
+
+        console.log(`[Socket] Message saved and broadcast in room ${roomId}`);
+      } catch (error) {
+        console.error("[Socket] Error saving message:", error);
+        socket.emit("error", { message: "Failed to send message" });
+      }
     });
 
     /**
@@ -269,28 +237,6 @@ function createPersistentSocketController(io, roomService) {
       for (const [roomId] of roomService.rooms) {
         const users = roomService.getUsers(roomId);
         io.to(roomId).emit("presence:update", users);
-
-        // Award study time points before removing user
-        if (userInfo && userInfo.userId && studyTimers.has(roomId)) {
-          const roomTimers = studyTimers.get(roomId);
-          if (roomTimers.has(userInfo.userId)) {
-            const startTime = roomTimers.get(userInfo.userId);
-            const studyMinutes = Math.floor((Date.now() - startTime) / 60000);
-            
-            if (studyMinutes >= 1) {
-              const pointsEarned = studyMinutes;
-              roomService.addPoints(roomId, userInfo.userId, userInfo.username, pointsEarned);
-              
-              const leaderboard = roomService.getLeaderboard(roomId);
-              io.to(roomId).emit("points:update", { roomId, leaderboard });
-              
-              console.log(`[Points] Awarded ${pointsEarned} points to ${userInfo.username} before disconnect`);
-            }
-            
-            roomTimers.delete(userInfo.userId);
-            if (roomTimers.size === 0) studyTimers.delete(roomId);
-          }
-        }
 
         // Remove from Redis if we have user info
         if (userInfo && userInfo.userId) {
