@@ -8,7 +8,7 @@ const { Server } = require("socket.io");
 const { connectDB, disconnectDB } = require("./config/database");
 const { closeRedis } = require("./config/redis"); // Initialize Redis
 const { createRoomService } = require("./services/roomService");
-const { createSocketController } = require("./controllers/socketController");
+const { createPersistentSocketController } = require("./controllers/persistentSocketController");
 const { createDailyRoom } = require("./services/dailyService");
 const { roomRouter } = require("./routes/roomRoutes");
 const {
@@ -73,7 +73,7 @@ const io = new Server(server, {
 });
 
 const roomService = createRoomService();
-const socketController = createSocketController(io, roomService);
+const socketController = createPersistentSocketController(io, roomService);
 
 io.on("connection", (socket) => {
   console.log(`[Socket.io] Client connected: ${socket.id}`);
