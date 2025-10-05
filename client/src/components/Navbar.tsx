@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import bunnyLogo from "../assets/bunny.png";
+import { useAuth } from "../contexts/AuthContext";
 
 const Navbar: React.FC = () => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, logout, isAuthenticated } = useAuth();
 
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -49,13 +51,27 @@ const Navbar: React.FC = () => {
               </Link>
             ))}
 
-            {/* CTA Button */}
-            <Link
-              to="/rooms"
-              className="ml-4 px-4 py-2 bg-indigo-600 text-white rounded-md font-medium hover:bg-indigo-700 transition-colors"
-            >
-              Get Started
-            </Link>
+            {/* Auth Buttons */}
+            {isAuthenticated ? (
+              <div className="ml-4 flex items-center gap-3">
+                <span className="text-sm text-slate-600">
+                  👋 {user?.displayName}
+                </span>
+                <button
+                  onClick={logout}
+                  className="px-4 py-2 bg-slate-200 text-slate-700 rounded-md font-medium hover:bg-slate-300 transition-colors"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <Link
+                to="/auth"
+                className="ml-4 px-4 py-2 bg-indigo-600 text-white rounded-md font-medium hover:bg-indigo-700 transition-colors"
+              >
+                Login / Sign Up
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu Button */}

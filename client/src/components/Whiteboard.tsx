@@ -56,9 +56,6 @@ class ExcalidrawErrorBoundary extends React.Component<
 const Whiteboard: React.FC<WhiteboardProps> = ({ socket, roomId }) => {
   const [excalidrawAPI, setExcalidrawAPI] = useState<any>(null);
   const [isCollaborating, setIsCollaborating] = useState(false);
-  const isDrawingRef = React.useRef(false);
-  const sendTimeoutRef = React.useRef<number | null>(null);
-  const updateTimeoutRef = React.useRef<number | null>(null);
 
   // Handle incoming whiteboard updates from other users
   useEffect(() => {
@@ -66,21 +63,9 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ socket, roomId }) => {
 
     const handleWhiteboardUpdate = (data: { elements: any[] }) => {
       try {
-        // Don't update if user is currently drawing to avoid conflicts
-        if (isDrawingRef.current) {
-          return;
-        }
-
-        // Debounce incoming updates to prevent glitching
-        if (updateTimeoutRef.current) {
-          clearTimeout(updateTimeoutRef.current);
-        }
-
-        updateTimeoutRef.current = setTimeout(() => {
-          excalidrawAPI.updateScene({
-            elements: data.elements,
-          });
-        }, 100) as unknown as number; // 100ms debounce for incoming updates
+        excalidrawAPI.updateScene({
+          elements: data.elements,
+        });
       } catch (error) {
         console.error("Error updating whiteboard:", error);
       }
@@ -90,44 +75,21 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ socket, roomId }) => {
 
     return () => {
       socket.off("whiteboard-update", handleWhiteboardUpdate);
-      if (updateTimeoutRef.current) {
-        clearTimeout(updateTimeoutRef.current);
-      }
     };
   }, [socket, excalidrawAPI]);
 
-  // Send whiteboard changes to other users with debouncing
+  // Send whiteboard changes to other users with throttling for real-time updates
   const handleChange = useCallback(
     (elements: readonly any[]) => {
       if (socket && isCollaborating) {
-        // Clear previous timeout
-        if (sendTimeoutRef.current) {
-          clearTimeout(sendTimeoutRef.current);
-        }
-
-        // Debounce sending to prevent too many updates
-        sendTimeoutRef.current = setTimeout(() => {
-          socket.emit("whiteboard-change", {
-            roomId,
-            elements: elements,
-          });
-        }, 150) as unknown as number; // 150ms debounce for outgoing updates
+        socket.emit("whiteboard-change", {
+          roomId,
+          elements: elements,
+        });
       }
     },
     [socket, roomId, isCollaborating]
   );
-
-  // Cleanup timeouts on unmount
-  useEffect(() => {
-    return () => {
-      if (sendTimeoutRef.current) {
-        clearTimeout(sendTimeoutRef.current);
-      }
-      if (updateTimeoutRef.current) {
-        clearTimeout(updateTimeoutRef.current);
-      }
-    };
-  }, []);
 
   return (
     <ExcalidrawErrorBoundary>
@@ -167,14 +129,13 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ socket, roomId }) => {
             excalidrawAPI={(api) => setExcalidrawAPI(api)}
             onChange={(elements) => handleChange(elements)}
             onPointerUpdate={(payload) => {
-              // Track when user is actively drawing
-              if (payload.button === "down") {
-                isDrawingRef.current = true;
-              } else if (payload.button === "up") {
-                // Add small delay before allowing updates again
-                setTimeout(() => {
-                  isDrawingRef.current = false;
-                }, 200);
+              // Send real-time pointer updates for cursor tracking
+              if (socket && isCollaborating && payload.button === "down") {
+                socket.emit("whiteboard-pointer", {
+                  roomId,
+                  x: payload.pointer.x,
+                  y: payload.pointer.y,
+                });
               }
             }}
             isCollaborating={isCollaborating}

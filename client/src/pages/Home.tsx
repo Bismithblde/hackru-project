@@ -8,10 +8,12 @@ import {
   useInView,
 } from "framer-motion";
 import bunnyLogo from "../assets/bunny.png";
+import { useAuth } from "../contexts/AuthContext";
 
 const Home: React.FC = () => {
   const heroRef = useRef<HTMLDivElement>(null);
   const featuresRef = useRef<HTMLDivElement>(null);
+  const { isAuthenticated } = useAuth();
 
   // Smooth scroll progress
   const { scrollYProgress } = useScroll();
@@ -214,7 +216,7 @@ const Home: React.FC = () => {
             transition={{ delay: 0.7, duration: 0.6 }}
             style={{ opacity: buttonsOpacity }}
           >
-            <Link to="/rooms">
+            <Link to={isAuthenticated ? "/rooms" : "/auth"}>
               <motion.button
                 className="px-8 py-4 text-white rounded-xl font-semibold shadow-lg text-lg"
                 style={{ backgroundColor: "#ae1207ff" }}
@@ -227,7 +229,7 @@ const Home: React.FC = () => {
                 whileTap={{ scale: 0.95 }}
               >
                 <span className="flex items-center gap-2">
-                  Get Started Free
+                  {isAuthenticated ? "Go to Rooms" : "Get Started Free"}
                   <motion.span
                     animate={{ x: [0, 5, 0] }}
                     transition={{ duration: 1.5, repeat: Infinity }}

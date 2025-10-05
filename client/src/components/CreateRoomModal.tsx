@@ -10,7 +10,6 @@ interface CreateRoomModalProps {
 export const CreateRoomModal = ({ isOpen, onClose }: CreateRoomModalProps) => {
   const [roomName, setRoomName] = useState("");
   const [username, setUsername] = useState("");
-  const [isPrivate, setIsPrivate] = useState(false);
   const [createdCode, setCreatedCode] = useState<string | null>(null);
   const { createRoom, loading, error } = useRoomContext();
   const navigate = useNavigate();
@@ -25,7 +24,6 @@ export const CreateRoomModal = ({ isOpen, onClose }: CreateRoomModalProps) => {
     const room = await createRoom({
       name: roomName.trim(),
       createdBy: username.trim(),
-      isPrivate: isPrivate,
     });
 
     if (room) {
@@ -45,7 +43,6 @@ export const CreateRoomModal = ({ isOpen, onClose }: CreateRoomModalProps) => {
   const handleClose = () => {
     setRoomName("");
     setUsername("");
-    setIsPrivate(false);
     setCreatedCode(null);
     onClose();
   };
@@ -102,27 +99,6 @@ export const CreateRoomModal = ({ isOpen, onClose }: CreateRoomModalProps) => {
                   disabled={loading}
                   required
                 />
-              </div>
-
-              <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
-                <input
-                  type="checkbox"
-                  id="isPrivate"
-                  checked={isPrivate}
-                  onChange={(e) => setIsPrivate(e.target.checked)}
-                  className="w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
-                  disabled={loading}
-                />
-                <label
-                  htmlFor="isPrivate"
-                  className="flex-1 text-sm text-slate-700 cursor-pointer"
-                >
-                  <span className="font-medium">Private Room</span>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Private rooms won't appear in the public room list
-                  </p>
-                </label>
-                <span className="text-xl">{isPrivate ? "🔒" : "🌐"}</span>
               </div>
 
               {error && (

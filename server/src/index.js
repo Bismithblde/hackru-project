@@ -14,6 +14,7 @@ const {
 const { createDailyRoom } = require("./services/dailyService");
 const { roomRouter } = require("./routes/roomRoutes");
 const timeTrackingRouter = require("./routes/timeTracking");
+const authRouter = require("./routes/authRoutes");
 const {
   saveWhiteboard,
   loadWhiteboard,
@@ -42,6 +43,9 @@ app.use(express.json());
 app.use(morgan("dev"));
 
 app.get("/", (req, res) => res.json({ status: "ok", time: Date.now() }));
+
+// Auth API routes
+app.use("/api/auth", authRouter);
 
 // Room management API routes
 app.use("/api/rooms", roomRouter);

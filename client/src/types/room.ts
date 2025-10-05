@@ -6,14 +6,12 @@ export interface Room {
   createdAt: number;
   participantCount: number;
   maxParticipants?: number;
-  isPrivate?: boolean;
 }
 
 export interface CreateRoomRequest {
   name: string;
   createdBy: string;
   maxParticipants?: number;
-  isPrivate?: boolean;
 }
 
 export interface CreateRoomResponse {
