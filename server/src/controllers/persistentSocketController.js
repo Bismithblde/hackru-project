@@ -142,9 +142,9 @@ function createPersistentSocketController(io, roomService) {
     });
 
     /**
-     * Chat message event - Enhanced with Redis persistence
+     * Chat message event - Simplified without Redis persistence
      */
-    socket.on("chat:message", async (payload = {}) => {
+    socket.on("chat:message", (payload = {}) => {
       console.log("[Socket] Received chat:message event:", payload);
       
       const ok = requireFields(payload, ["roomId", "userId", "message"]);
@@ -157,37 +157,20 @@ function createPersistentSocketController(io, roomService) {
       console.log(`[Socket] Processing message from ${username} (${userId}) in room ${roomId}`);
 
       // Prepare message object
-      const messageObj = {
+      const out = {
         id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         userId,
         username: username || "Anonymous",
         message,
-        timestamp: ts || Date.now(),
-      };
-
-      // Always broadcast to all users in room first (real-time chat)
-      const out = {
-        id: messageObj.id,
-        userId: messageObj.userId,
-        username: messageObj.username,
-        message: messageObj.message,
-        ts: messageObj.timestamp,
+        ts: ts || Date.now(),
       };
 
       console.log(`[Socket] Broadcasting message to room ${roomId}:`, out);
+      
+      // Broadcast to all users in the room (including sender)
       io.to(roomId).emit("chat:message", out);
-
-      // Try to save to Redis for persistence (non-blocking)
-      if (isRedisAvailable()) {
-        try {
-          await persistentRoomService.saveMessage(roomId, messageObj);
-          console.log(`[Socket] Message saved to Redis and broadcast in room ${roomId}`);
-        } catch (error) {
-          console.error("[Socket] Error saving message to Redis (message was still broadcast):", error.message);
-        }
-      } else {
-        console.log(`[Socket] Message broadcast in room ${roomId} (Redis unavailable, not persisted)`);
-      }
+      
+      console.log(`[Socket] Message broadcast complete for room ${roomId}`);
     });
 
     /**
