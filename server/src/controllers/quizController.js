@@ -6,6 +6,7 @@
 const roomQuizzes = new Map(); // roomId -> quiz
 const roomScores = new Map(); // roomId -> { username: score }
 const persistentRoomService = require("../services/persistentRoomService");
+const mongoRoomService = require("../services/mongoRoomService");
 
 /**
  * Get room owner from persistent storage
@@ -80,6 +81,14 @@ function registerQuizEvents(socket, io, roomService) {
 
     // Initialize scores for this room
     roomScores.set(roomId, new Map());
+
+    // Increment quiz count in MongoDB
+    try {
+      await mongoRoomService.incrementQuizzes(roomId);
+    } catch (err) {
+      console.error("[Quiz] Error incrementing quiz count:", err.message);
+      // Non-critical - continue
+    }
 
     // Get all sockets in the room to verify broadcast will reach them
     const socketsInRoom = await io.in(roomId).fetchSockets();

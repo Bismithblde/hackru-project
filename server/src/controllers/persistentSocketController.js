@@ -3,6 +3,7 @@ const persistentRoomService = require("../services/persistentRoomService");
 const { isRedisAvailable } = require("../config/redis");
 const { registerQuizEvents, cleanupRoomQuiz } = require("./quizController");
 const timeTrackingService = require("../services/timeTrackingService");
+const mongoRoomService = require("../services/mongoRoomService");
 
 // In-memory chat storage (no Redis)
 const roomMessages = new Map(); // roomId -> array of messages
@@ -47,6 +48,14 @@ function createPersistentSocketController(io, roomService) {
         } catch (err) {
           console.error("[Socket] Error starting time tracking:", err.message);
           // Continue anyway - time tracking is optional
+        }
+
+        // Add participant to MongoDB room
+        try {
+          await mongoRoomService.joinRoom(roomId, userId, username);
+        } catch (err) {
+          console.error("[Socket] Error adding participant to MongoDB:", err.message);
+          // Continue anyway - room will still work
         }
 
         // Add to Redis (for persistence) - only if Redis is available
@@ -196,6 +205,14 @@ function createPersistentSocketController(io, roomService) {
         `[Socket] Room ${roomId} now has ${messages.length} messages`
       );
 
+      // Increment message count in MongoDB
+      try {
+        await mongoRoomService.incrementMessages(roomId);
+      } catch (err) {
+        // Non-critical - just log
+        console.error("[Socket] Error incrementing message count:", err.message);
+      }
+
       // Broadcast immediately to all users in room
       io.to(roomId).emit("chat:message", out);
       console.log(`[Socket] Broadcast chat:message to room ${roomId}:`, out);
@@ -300,6 +317,13 @@ function createPersistentSocketController(io, roomService) {
             await timeTrackingService.endTracking(roomId, userInfo.userId);
           } catch (err) {
             console.error("[Socket] Error ending time tracking on disconnect:", err.message);
+          }
+          
+          // Remove participant from MongoDB room
+          try {
+            await mongoRoomService.leaveRoom(roomId, userInfo.userId);
+          } catch (err) {
+            console.error("[Socket] Error removing participant from MongoDB:", err.message);
           }
         }
       }

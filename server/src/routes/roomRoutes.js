@@ -1,42 +1,15 @@
 const express = require("express");
 const router = express.Router();
+const mongoRoomService = require("../services/mongoRoomService");
 
 /**
- * Simple in-memory room storage (no Redis)
- */
-const rooms = new Map();
-
-function generateUniqueRoomCode() {
-  let code;
-  let attempts = 0;
-  const MAX_ATTEMPTS = 20;
-
-  do {
-    code = Math.floor(100000 + Math.random() * 900000).toString();
-    attempts++;
-
-    if (attempts > MAX_ATTEMPTS) {
-      throw new Error("Unable to generate unique room code. Please try again.");
-    }
-  } while (rooms.has(code)); // Check for collision!
-
-  if (attempts > 1) {
-    console.log(
-      `[RoomCode] Generated: ${code} (collision avoided, attempts: ${attempts})`
-    );
-  }
-
-  return code;
-}
-
-/**
- * Room Management Routes
+ * Room Management Routes (MongoDB-backed for persistence)
  */
 
 // POST /api/rooms/create - Create a new room
 router.post("/create", async (req, res) => {
   try {
-    const { name, createdBy, maxParticipants = 10 } = req.body;
+    const { name, createdBy, description, maxParticipants, settings } = req.body;
 
     if (!name || !createdBy) {
       return res.status(400).json({
@@ -45,19 +18,15 @@ router.post("/create", async (req, res) => {
       });
     }
 
-    const code = generateUniqueRoomCode(); // Now collision-safe!
-    const room = {
-      id: code,
-      code,
+    const room = await mongoRoomService.createRoom({
       name,
       createdBy,
-      createdAt: Date.now(),
+      description,
       maxParticipants,
-      participantCount: 0,
-    };
+      settings,
+    });
 
-    rooms.set(code, room);
-    console.log(`[Room Created] Code: ${code}, Name: ${name}`);
+    console.log(`[Room Created] Code: ${room.code}, Name: ${name}`);
 
     res.json({
       success: true,
@@ -84,7 +53,7 @@ router.post("/join", async (req, res) => {
       });
     }
 
-    const room = rooms.get(code);
+    const room = await mongoRoomService.getRoom(code);
 
     if (!room) {
       return res.status(404).json({
@@ -111,10 +80,13 @@ router.post("/join", async (req, res) => {
 // GET /api/rooms - Get all active rooms
 router.get("/", async (req, res) => {
   try {
-    const allRooms = Array.from(rooms.values());
+    const limit = parseInt(req.query.limit || "100", 10);
+    const allRooms = await mongoRoomService.getAllRooms(limit);
+    
     res.json({
       success: true,
       rooms: allRooms,
+      count: allRooms.length,
     });
   } catch (error) {
     console.error("Error fetching rooms:", error);
@@ -129,7 +101,7 @@ router.get("/", async (req, res) => {
 router.get("/:code", async (req, res) => {
   try {
     const { code } = req.params;
-    const room = rooms.get(code);
+    const room = await mongoRoomService.getRoom(code);
 
     if (!room) {
       return res.status(404).json({
@@ -156,7 +128,7 @@ router.delete("/:code", async (req, res) => {
   try {
     const { code } = req.params;
 
-    const room = rooms.get(code);
+    const room = await mongoRoomService.getRoom(code);
     if (!room) {
       return res.status(404).json({
         success: false,
@@ -164,7 +136,7 @@ router.delete("/:code", async (req, res) => {
       });
     }
 
-    rooms.delete(code);
+    await mongoRoomService.deleteRoom(code);
     console.log(`[Room Deleted] Code: ${code}`);
 
     res.json({
@@ -176,6 +148,32 @@ router.delete("/:code", async (req, res) => {
     res.status(500).json({
       success: false,
       error: error.message || "Failed to delete room",
+    });
+  }
+});
+
+// GET /api/rooms/:code/stats - Get room statistics
+router.get("/:code/stats", async (req, res) => {
+  try {
+    const { code } = req.params;
+    const stats = await mongoRoomService.getRoomStats(code);
+
+    if (!stats) {
+      return res.status(404).json({
+        success: false,
+        error: "Room not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      stats,
+    });
+  } catch (error) {
+    console.error("Error fetching stats:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message || "Failed to fetch stats",
     });
   }
 });
