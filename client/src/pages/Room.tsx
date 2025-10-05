@@ -197,131 +197,151 @@ const Room: React.FC = () => {
               </div>
             </div>
           )}
-            {/* User Info & Voice Controls */}
-            <div className="bg-white rounded-lg border border-slate-200 p-6">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-indigo-600 rounded-lg flex items-center justify-center">
-                    <span className="text-white text-xl font-bold">
-                      {username ? username[0].toUpperCase() : "?"}
-                    </span>
-                  </div>
-                  <div>
-                    <div className="text-lg font-semibold text-slate-900">
-                      {username}
-                    </div>
-                    <div className="text-xs text-slate-500">
-                      ID: {userIdRef.current.slice(0, 8)}...
-                    </div>
-                  </div>
+          {/* User Info & Voice Controls */}
+          <div className="bg-white rounded-lg border border-slate-200 p-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-indigo-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white text-xl font-bold">
+                    {username ? username[0].toUpperCase() : "?"}
+                  </span>
                 </div>
-                <div className="flex flex-col items-end gap-2">
-                  {dailyRoomError && (
-                    <div className="text-xs text-red-600 bg-red-50 px-3 py-1 rounded-lg border border-red-200">
-                      Voice chat error: {dailyRoomError}
-                    </div>
-                  )}
-                  {dailyLoading && (
-                    <div className="text-xs text-slate-600 bg-slate-100 px-3 py-1 rounded-lg">
-                      Loading voice chat...
-                    </div>
-                  )}
-                  <AudioControls
-                    onMicEnabled={handleMicEnabled}
-                    onError={(err) => {
-                      console.error("[Room] Mic error:", err);
-                      alert(`Microphone error: ${err}`);
-                    }}
-                  />
+                <div>
+                  <div className="text-lg font-semibold text-slate-900">
+                    {username}
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    ID: {userIdRef.current.slice(0, 8)}...
+                  </div>
                 </div>
               </div>
-
-              {/* Participants Section */}
-              <div className="mt-6 pt-6 border-t border-slate-200">
-                <Presence users={users} meSocketId={socketId ?? ""} />
+              <div className="flex flex-col items-end gap-2">
+                {dailyRoomError && (
+                  <div className="text-xs text-red-600 bg-red-50 px-3 py-1 rounded-lg border border-red-200">
+                    Voice chat error: {dailyRoomError}
+                  </div>
+                )}
+                {dailyLoading && (
+                  <div className="text-xs text-slate-600 bg-slate-100 px-3 py-1 rounded-lg">
+                    Loading voice chat...
+                  </div>
+                )}
+                <AudioControls
+                  onMicEnabled={handleMicEnabled}
+                  onError={(err) => {
+                    console.error("[Room] Mic error:", err);
+                    alert(`Microphone error: ${err}`);
+                  }}
+                />
               </div>
             </div>
 
-            {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative">
-              {/* Chat & Whiteboard Section with Tabs */}
-              <div className="lg:col-span-2 bg-white rounded-lg border border-slate-200 overflow-hidden">
-                {/* Tab Headers */}
-                <div className="flex border-b border-slate-200">
-                  <button
-                    onClick={() => username && username.trim() && setActiveTab("chat")}
-                    className={`flex-1 px-6 py-4 font-semibold text-base transition-all ${
-                      activeTab === "chat"
-                        ? "bg-white text-indigo-600 border-b-2 border-indigo-600"
-                        : "bg-slate-50 text-slate-600 hover:bg-slate-100"
-                    } ${!username || !username.trim() ? "opacity-50 cursor-not-allowed" : ""}`}
-                    disabled={!username || !username.trim()}
-                    title={!username || !username.trim() ? "Enter your name to use chat" : ""}
-                  >
-                    <span className="flex items-center justify-center gap-2">
-                      <span>💬</span> Chat
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => username && username.trim() && setActiveTab("whiteboard")}
-                    className={`flex-1 px-6 py-4 font-semibold text-base transition-all ${
-                      activeTab === "whiteboard"
-                        ? "bg-white text-indigo-600 border-b-2 border-indigo-600"
-                        : "bg-slate-50 text-slate-600 hover:bg-slate-100"
-                    } ${!username || !username.trim() ? "opacity-50 cursor-not-allowed" : ""}`}
-                    disabled={!username || !username.trim()}
-                    title={!username || !username.trim() ? "Enter your name to use whiteboard" : ""}
-                  >
-                    <span className="flex items-center justify-center gap-2">
-                      <span>🎨</span> Whiteboard
-                    </span>
-                  </button>
-                </div>
+            {/* Participants Section */}
+            <div className="mt-6 pt-6 border-t border-slate-200">
+              <Presence users={users} meSocketId={socketId ?? ""} />
+            </div>
+          </div>
 
-                {/* Tab Content */}
-                <div style={{ height: "600px", width: "100%" }}>
-                  {activeTab === "chat" ? (
-                    <div className="h-full p-6">
-                      <Chat
-                        messages={messages}
-                        currentUserId={userIdRef.current}
-                        onSend={handleSendMessage}
-                      />
-                    </div>
-                  ) : (
-                    <div
-                      className="p-6 flex items-center justify-center"
-                      style={{ height: "100%" }}
-                    >
-                      <Whiteboard socket={getSocket()!} roomId={roomId} />
-                    </div>
-                  )}
-                </div>
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative">
+            {/* Chat & Whiteboard Section with Tabs */}
+            <div className="lg:col-span-2 bg-white rounded-lg border border-slate-200 overflow-hidden">
+              {/* Tab Headers */}
+              <div className="flex border-b border-slate-200">
+                <button
+                  onClick={() =>
+                    username && username.trim() && setActiveTab("chat")
+                  }
+                  className={`flex-1 px-6 py-4 font-semibold text-base transition-all ${
+                    activeTab === "chat"
+                      ? "bg-white text-indigo-600 border-b-2 border-indigo-600"
+                      : "bg-slate-50 text-slate-600 hover:bg-slate-100"
+                  } ${
+                    !username || !username.trim()
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                  }`}
+                  disabled={!username || !username.trim()}
+                  title={
+                    !username || !username.trim()
+                      ? "Enter your name to use chat"
+                      : ""
+                  }
+                >
+                  <span className="flex items-center justify-center gap-2">
+                    <span>💬</span> Chat
+                  </span>
+                </button>
+                <button
+                  onClick={() =>
+                    username && username.trim() && setActiveTab("whiteboard")
+                  }
+                  className={`flex-1 px-6 py-4 font-semibold text-base transition-all ${
+                    activeTab === "whiteboard"
+                      ? "bg-white text-indigo-600 border-b-2 border-indigo-600"
+                      : "bg-slate-50 text-slate-600 hover:bg-slate-100"
+                  } ${
+                    !username || !username.trim()
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                  }`}
+                  disabled={!username || !username.trim()}
+                  title={
+                    !username || !username.trim()
+                      ? "Enter your name to use whiteboard"
+                      : ""
+                  }
+                >
+                  <span className="flex items-center justify-center gap-2">
+                    <span>🎨</span> Whiteboard
+                  </span>
+                </button>
               </div>
 
-              {/* Leaderboard & Actions */}
-              <div className="space-y-6">
-                <div className="bg-white rounded-lg border border-slate-200 p-6">
-                  <h3 className="text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                    <span>🏆</span> Leaderboard
-                  </h3>
-                  <Leaderboard entries={leaderboard} />
-                </div>
-
-                <div className="bg-slate-900 rounded-lg p-6 text-white">
-                  <h3 className="text-lg font-semibold mb-2">Quick Actions</h3>
-                  <p className="text-sm text-slate-400 mb-4">
-                    Test game features
-                  </p>
-                  <button
-                    onClick={handleSubmitRandomAnswer}
-                    className="w-full px-4 py-3 bg-white text-slate-900 rounded-lg hover:bg-slate-100 transition-colors font-medium"
+              {/* Tab Content */}
+              <div style={{ height: "600px", width: "100%" }}>
+                {activeTab === "chat" ? (
+                  <div className="h-full p-6">
+                    <Chat
+                      messages={messages}
+                      currentUserId={userIdRef.current}
+                      onSend={handleSendMessage}
+                    />
+                  </div>
+                ) : (
+                  <div
+                    className="p-6 flex items-center justify-center"
+                    style={{ height: "100%" }}
                   >
-                    Submit Random Answer
-                  </button>
-                </div>
+                    <Whiteboard socket={getSocket()!} roomId={roomId} />
+                  </div>
+                )}
               </div>
             </div>
+
+            {/* Leaderboard & Actions */}
+            <div className="space-y-6">
+              <div className="bg-white rounded-lg border border-slate-200 p-6">
+                <h3 className="text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                  <span>🏆</span> Leaderboard
+                </h3>
+                <Leaderboard entries={leaderboard} />
+              </div>
+
+              <div className="bg-slate-900 rounded-lg p-6 text-white">
+                <h3 className="text-lg font-semibold mb-2">Quick Actions</h3>
+                <p className="text-sm text-slate-400 mb-4">
+                  Test game features
+                </p>
+                <button
+                  onClick={handleSubmitRandomAnswer}
+                  className="w-full px-4 py-3 bg-white text-slate-900 rounded-lg hover:bg-slate-100 transition-colors font-medium"
+                >
+                  Submit Random Answer
+                </button>
+              </div>
+            </div>
+          </div>
           {/* End main content */}
         </>
 
