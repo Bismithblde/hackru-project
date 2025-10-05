@@ -73,6 +73,13 @@ const io = new Server(server, {
 });
 
 const roomService = createRoomService();
+
+// Register Pomodoro cleanup when rooms become empty
+const { cleanupRoomPomodoro } = require("./controllers/pomodoroController");
+roomService.onRoomEmpty((roomId) => {
+  cleanupRoomPomodoro(roomId);
+});
+
 const socketController = createPersistentSocketController(io, roomService);
 
 io.on("connection", (socket) => {

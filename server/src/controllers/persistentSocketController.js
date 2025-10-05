@@ -1,6 +1,7 @@
 const { requireFields } = require("../utils/validator");
 const persistentRoomService = require("../services/persistentRoomService");
 const { isRedisAvailable } = require("../config/redis");
+const { registerPomodoroEvents, cleanupRoomPomodoro } = require("./pomodoroController");
 
 /**
  * Enhanced Socket Controller with Redis Persistence
@@ -12,6 +13,9 @@ function createPersistentSocketController(io, roomService) {
 
   function register(socket) {
     let lastAwardTs = 0;
+
+    // Register Pomodoro events
+    registerPomodoroEvents(socket, io);
 
     /**
      * Join room event - Enhanced with Redis persistence

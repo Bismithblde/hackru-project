@@ -7,10 +7,21 @@ function createRoomService() {
 
   // Performance optimization: O(1) socket-to-room lookup
   const socketToRoom = new Map(); // socketId -> roomId
+  
+  // Cleanup callbacks when room becomes empty
+  const cleanupCallbacks = [];
 
   function ensureRoom(roomId) {
     if (!rooms.has(roomId)) rooms.set(roomId, new Map());
     return rooms.get(roomId);
+  }
+  
+  function onRoomEmpty(callback) {
+    cleanupCallbacks.push(callback);
+  }
+  
+  function notifyRoomEmpty(roomId) {
+    cleanupCallbacks.forEach(cb => cb(roomId));
   }
 
   function addUser(roomId, user) {
@@ -32,7 +43,10 @@ function createRoomService() {
     room.delete(socketId);
     socketToRoom.delete(socketId);
 
-    if (room.size === 0) rooms.delete(roomId);
+    if (room.size === 0) {
+      rooms.delete(roomId);
+      notifyRoomEmpty(roomId);
+    }
   }
 
   function removeUserBySocket(socketId) {
@@ -42,8 +56,14 @@ function createRoomService() {
 
     const room = rooms.get(roomId);
     if (room) {
+      const userInfo = room.get(socketId);
       room.delete(socketId);
-      if (room.size === 0) rooms.delete(roomId);
+      if (room.size === 0) {
+        rooms.delete(roomId);
+        notifyRoomEmpty(roomId);
+      }
+      socketToRoom.delete(socketId);
+      return userInfo;
     }
 
     socketToRoom.delete(socketId);
@@ -98,6 +118,7 @@ function createRoomService() {
     getUsers,
     addPoints,
     getLeaderboard,
+    onRoomEmpty,
   };
 }
 
