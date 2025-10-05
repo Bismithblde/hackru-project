@@ -33,6 +33,7 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
   const [userAnswers, setUserAnswers] = useState<Record<string, number>>({});
   const [showStartNotification, setShowStartNotification] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [isCreatingQuiz, setIsCreatingQuiz] = useState(false);
 
   // Quiz creation form state
   const [quizTitle, setQuizTitle] = useState("");
@@ -47,9 +48,16 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
 
   useEffect(() => {
     const socket = getSocket();
-    if (!socket) {
-      console.error("[Quiz] No socket available!");
-      return;
+    if (!socket || !socket.connected) {
+      console.warn("[Quiz] Socket not connected yet, waiting...");
+      // Retry after a short delay
+      const timer = setTimeout(() => {
+        const retrySocket = getSocket();
+        if (retrySocket && retrySocket.connected) {
+          console.log("[Quiz] Socket connected on retry");
+        }
+      }, 100);
+      return () => clearTimeout(timer);
     }
 
     console.log("[Quiz] Setting up event listeners for room:", roomId);
@@ -60,6 +68,7 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
       setActiveQuiz(data.quiz);
       setShowCreateForm(false);
       setErrorMessage("");
+      setIsCreatingQuiz(false); // Re-enable creation for future quizzes
     };
 
     const handleQuizStarted = (data: any) => {
@@ -104,6 +113,7 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
     const handleQuizError = (data: any) => {
       console.error("[Quiz] ❌ Quiz error event received:", data);
       setErrorMessage(data.message || "An error occurred");
+      setIsCreatingQuiz(false); // Re-enable on error
       setTimeout(() => setErrorMessage(""), 5000);
     };
 
@@ -130,6 +140,11 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
   }, [roomId]);
 
   const handleCreateQuiz = () => {
+    if (isCreatingQuiz) {
+      console.log("[Quiz] Already creating quiz, ignoring duplicate click");
+      return;
+    }
+    
     console.log("[Quiz] handleCreateQuiz called");
     console.log("[Quiz] Quiz title:", quizTitle);
     console.log("[Quiz] Questions:", questions);
@@ -155,6 +170,8 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
       }
     }
 
+    setIsCreatingQuiz(true);
+    
     const quiz: Quiz = {
       id: Date.now().toString(),
       title: quizTitle,
@@ -401,12 +418,20 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
         <div className="flex gap-3 sticky bottom-0 bg-gradient-to-br from-indigo-50 to-purple-50 p-4 rounded-lg border border-indigo-200">
           <button
             onClick={handleCreateQuiz}
-            className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all transform hover:scale-[1.02] font-medium shadow-lg"
+            disabled={isCreatingQuiz}
+            className={`flex-1 px-4 py-3 rounded-lg transition-all transform font-medium shadow-lg ${
+              isCreatingQuiz
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-green-600 text-white hover:bg-green-700 hover:scale-[1.02]"
+            }`}
           >
-            Create Quiz
+            {isCreatingQuiz ? "Creating..." : "Create Quiz"}
           </button>
           <button
-            onClick={() => setShowCreateForm(false)}
+            onClick={() => {
+              setShowCreateForm(false);
+              setIsCreatingQuiz(false);
+            }}
             className="px-4 py-3 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors"
           >
             Cancel
