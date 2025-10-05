@@ -28,7 +28,6 @@ app.use(helmet());
 app.use(
   cors({
     origin: CORS_ORIGIN,
-    credentials: true,
   })
 );
 app.use(express.json());
@@ -64,7 +63,6 @@ const io = new Server(server, {
   cors: {
     origin: CORS_ORIGIN,
     methods: ["GET", "POST"],
-    credentials: true,
   },
 });
 
