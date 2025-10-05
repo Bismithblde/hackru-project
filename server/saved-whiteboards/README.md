@@ -5,6 +5,7 @@ This directory stores persistent whiteboard snapshots as JSON files.
 ## Structure
 
 Each saved whiteboard is stored as a JSON file with the following naming convention:
+
 ```
 <whiteboard-id>.json
 ```
@@ -12,6 +13,7 @@ Each saved whiteboard is stored as a JSON file with the following naming convent
 ## File Format
 
 Each JSON file contains:
+
 ```json
 {
   "id": "unique-16-char-hex-id",

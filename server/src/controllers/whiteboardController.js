@@ -1,6 +1,6 @@
-const crypto = require('crypto');
-const Whiteboard = require('../models/Whiteboard');
-const { isDBConnected } = require('../config/database');
+const crypto = require("crypto");
+const Whiteboard = require("../models/Whiteboard");
+const { isDBConnected } = require("../config/database");
 
 /**
  * Save a whiteboard and return a unique ID
@@ -8,29 +8,30 @@ const { isDBConnected } = require('../config/database');
 async function saveWhiteboard(req, res) {
   // Check if MongoDB is connected
   if (!isDBConnected()) {
-    console.error('❌ MongoDB is not connected');
-    return res.status(503).json({ 
-      error: 'Database not available. Whiteboard persistence is currently disabled.' 
+    console.error("❌ MongoDB is not connected");
+    return res.status(503).json({
+      error:
+        "Database not available. Whiteboard persistence is currently disabled.",
     });
   }
 
   try {
     const { elements, appState, roomId } = req.body;
 
-    console.log('📝 Received save request:', { 
-      elementsCount: elements?.length, 
-      hasAppState: !!appState, 
-      roomId 
+    console.log("📝 Received save request:", {
+      elementsCount: elements?.length,
+      hasAppState: !!appState,
+      roomId,
     });
 
     if (!elements || !Array.isArray(elements)) {
-      console.error('❌ Invalid whiteboard data - elements is not an array');
-      return res.status(400).json({ error: 'Invalid whiteboard data' });
+      console.error("❌ Invalid whiteboard data - elements is not an array");
+      return res.status(400).json({ error: "Invalid whiteboard data" });
     }
 
     // Generate unique ID
-    const whiteboardId = crypto.randomBytes(8).toString('hex');
-    
+    const whiteboardId = crypto.randomBytes(8).toString("hex");
+
     // Create new whiteboard document
     const whiteboard = new Whiteboard({
       whiteboardId,
@@ -48,11 +49,13 @@ async function saveWhiteboard(req, res) {
       success: true,
       whiteboardId,
       url: `/whiteboard/${whiteboardId}`,
-      shareableLink: `${req.protocol}://${req.get('host')}/whiteboard/${whiteboardId}`
+      shareableLink: `${req.protocol}://${req.get(
+        "host"
+      )}/whiteboard/${whiteboardId}`,
     });
   } catch (error) {
-    console.error('❌ Error saving whiteboard:', error);
-    res.status(500).json({ error: 'Failed to save whiteboard' });
+    console.error("❌ Error saving whiteboard:", error);
+    res.status(500).json({ error: "Failed to save whiteboard" });
   }
 }
 
@@ -62,8 +65,9 @@ async function saveWhiteboard(req, res) {
 async function loadWhiteboard(req, res) {
   // Check if MongoDB is connected
   if (!isDBConnected()) {
-    return res.status(503).json({ 
-      error: 'Database not available. Whiteboard persistence is currently disabled.' 
+    return res.status(503).json({
+      error:
+        "Database not available. Whiteboard persistence is currently disabled.",
     });
   }
 
@@ -72,17 +76,17 @@ async function loadWhiteboard(req, res) {
 
     // Validate ID format (simple hex check)
     if (!/^[a-f0-9]{16}$/i.test(id)) {
-      return res.status(400).json({ error: 'Invalid whiteboard ID' });
+      return res.status(400).json({ error: "Invalid whiteboard ID" });
     }
 
     // Find whiteboard in database
-    const whiteboard = await Whiteboard.findOne({ 
+    const whiteboard = await Whiteboard.findOne({
       whiteboardId: id,
-      isDeleted: false 
+      isDeleted: false,
     });
 
     if (!whiteboard) {
-      return res.status(404).json({ error: 'Whiteboard not found' });
+      return res.status(404).json({ error: "Whiteboard not found" });
     }
 
     // Increment view count
@@ -99,11 +103,11 @@ async function loadWhiteboard(req, res) {
         createdAt: whiteboard.createdAt,
         version: whiteboard.version,
         viewCount: whiteboard.viewCount,
-      }
+      },
     });
   } catch (error) {
-    console.error('❌ Error loading whiteboard:', error);
-    res.status(500).json({ error: 'Failed to load whiteboard' });
+    console.error("❌ Error loading whiteboard:", error);
+    res.status(500).json({ error: "Failed to load whiteboard" });
   }
 }
 
@@ -113,40 +117,39 @@ async function loadWhiteboard(req, res) {
 async function listWhiteboards(req, res) {
   // Check if MongoDB is connected
   if (!isDBConnected()) {
-    return res.status(503).json({ 
-      error: 'Database not available' 
+    return res.status(503).json({
+      error: "Database not available",
     });
   }
 
   try {
     const { limit = 50, roomId } = req.query;
-    
+
     const query = { isDeleted: false };
     if (roomId) {
       query.roomId = roomId;
     }
 
-    const whiteboards = await Whiteboard
-      .find(query)
-      .select('whiteboardId roomId createdAt updatedAt viewCount')
+    const whiteboards = await Whiteboard.find(query)
+      .select("whiteboardId roomId createdAt updatedAt viewCount")
       .sort({ createdAt: -1 })
       .limit(parseInt(limit));
 
     res.json({
       success: true,
       count: whiteboards.length,
-      whiteboards: whiteboards.map(wb => ({
+      whiteboards: whiteboards.map((wb) => ({
         id: wb.whiteboardId,
         roomId: wb.roomId,
         createdAt: wb.createdAt,
         updatedAt: wb.updatedAt,
         viewCount: wb.viewCount,
         url: `/whiteboard/${wb.whiteboardId}`,
-      }))
+      })),
     });
   } catch (error) {
-    console.error('❌ Error listing whiteboards:', error);
-    res.status(500).json({ error: 'Failed to list whiteboards' });
+    console.error("❌ Error listing whiteboards:", error);
+    res.status(500).json({ error: "Failed to list whiteboards" });
   }
 }
 
@@ -156,8 +159,8 @@ async function listWhiteboards(req, res) {
 async function deleteWhiteboard(req, res) {
   // Check if MongoDB is connected
   if (!isDBConnected()) {
-    return res.status(503).json({ 
-      error: 'Database not available' 
+    return res.status(503).json({
+      error: "Database not available",
     });
   }
 
@@ -165,13 +168,13 @@ async function deleteWhiteboard(req, res) {
     const { id } = req.params;
 
     if (!/^[a-f0-9]{16}$/i.test(id)) {
-      return res.status(400).json({ error: 'Invalid whiteboard ID' });
+      return res.status(400).json({ error: "Invalid whiteboard ID" });
     }
 
     const whiteboard = await Whiteboard.findOne({ whiteboardId: id });
-    
+
     if (!whiteboard) {
-      return res.status(404).json({ error: 'Whiteboard not found' });
+      return res.status(404).json({ error: "Whiteboard not found" });
     }
 
     // Soft delete
@@ -179,10 +182,10 @@ async function deleteWhiteboard(req, res) {
     await whiteboard.save();
 
     console.log(`🗑️  Whiteboard deleted: ${id}`);
-    res.json({ success: true, message: 'Whiteboard deleted' });
+    res.json({ success: true, message: "Whiteboard deleted" });
   } catch (error) {
-    console.error('❌ Error deleting whiteboard:', error);
-    res.status(500).json({ error: 'Failed to delete whiteboard' });
+    console.error("❌ Error deleting whiteboard:", error);
+    res.status(500).json({ error: "Failed to delete whiteboard" });
   }
 }
 
@@ -192,8 +195,8 @@ async function deleteWhiteboard(req, res) {
 async function updateWhiteboard(req, res) {
   // Check if MongoDB is connected
   if (!isDBConnected()) {
-    return res.status(503).json({ 
-      error: 'Database not available' 
+    return res.status(503).json({
+      error: "Database not available",
     });
   }
 
@@ -202,20 +205,20 @@ async function updateWhiteboard(req, res) {
     const { elements, appState } = req.body;
 
     if (!/^[a-f0-9]{16}$/i.test(id)) {
-      return res.status(400).json({ error: 'Invalid whiteboard ID' });
+      return res.status(400).json({ error: "Invalid whiteboard ID" });
     }
 
     if (!elements || !Array.isArray(elements)) {
-      return res.status(400).json({ error: 'Invalid whiteboard data' });
+      return res.status(400).json({ error: "Invalid whiteboard data" });
     }
 
-    const whiteboard = await Whiteboard.findOne({ 
+    const whiteboard = await Whiteboard.findOne({
       whiteboardId: id,
-      isDeleted: false 
+      isDeleted: false,
     });
-    
+
     if (!whiteboard) {
-      return res.status(404).json({ error: 'Whiteboard not found' });
+      return res.status(404).json({ error: "Whiteboard not found" });
     }
 
     // Update fields
@@ -223,21 +226,21 @@ async function updateWhiteboard(req, res) {
     if (appState) {
       whiteboard.appState = appState;
     }
-    
+
     await whiteboard.save();
 
     console.log(`✏️  Whiteboard updated: ${id}`);
-    res.json({ 
-      success: true, 
-      message: 'Whiteboard updated',
+    res.json({
+      success: true,
+      message: "Whiteboard updated",
       whiteboard: {
         id: whiteboard.whiteboardId,
         updatedAt: whiteboard.updatedAt,
-      }
+      },
     });
   } catch (error) {
-    console.error('❌ Error updating whiteboard:', error);
-    res.status(500).json({ error: 'Failed to update whiteboard' });
+    console.error("❌ Error updating whiteboard:", error);
+    res.status(500).json({ error: "Failed to update whiteboard" });
   }
 }
 

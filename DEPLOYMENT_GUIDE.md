@@ -8,13 +8,14 @@ This guide covers deploying your StudyBunny app with MongoDB Atlas (cloud databa
 
 ✅ MongoDB Atlas account setup (see `MONGODB_SETUP.md`)  
 ✅ MongoDB connection string ready  
-✅ Git repository pushed to GitHub  
+✅ Git repository pushed to GitHub
 
 ---
 
 ## Best Deployment Platforms (FREE Tier)
 
 ### 1. **Render** (Recommended) ⭐
+
 - ✅ Easy to use
 - ✅ Free tier includes 750 hours/month
 - ✅ Auto-deploy from GitHub
@@ -22,6 +23,7 @@ This guide covers deploying your StudyBunny app with MongoDB Atlas (cloud databa
 - ⚠️ Spins down after inactivity (30 sec cold start)
 
 ### 2. **Railway**
+
 - ✅ Very developer-friendly
 - ✅ $5 free credit/month
 - ✅ Fast deployment
@@ -29,6 +31,7 @@ This guide covers deploying your StudyBunny app with MongoDB Atlas (cloud databa
 - ⚠️ Limited free tier
 
 ### 3. **Fly.io**
+
 - ✅ Generous free tier
 - ✅ Global edge deployment
 - ✅ Always on (no cold starts)
@@ -45,6 +48,7 @@ This guide covers deploying your StudyBunny app with MongoDB Atlas (cloud databa
 3. Click **"New +"** → **"Web Service"**
 4. Connect your GitHub repository
 5. Configure:
+
    ```
    Name: studybunny-server
    Environment: Node
@@ -56,6 +60,7 @@ This guide covers deploying your StudyBunny app with MongoDB Atlas (cloud databa
    ```
 
 6. **Environment Variables** - Click "Advanced" and add:
+
    ```
    PORT=4000
    MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/studybunny?retryWrites=true&w=majority
@@ -72,6 +77,7 @@ This guide covers deploying your StudyBunny app with MongoDB Atlas (cloud databa
 1. Click **"New +"** → **"Static Site"**
 2. Connect same GitHub repository
 3. Configure:
+
    ```
    Name: studybunny-client
    Branch: main
@@ -81,6 +87,7 @@ This guide covers deploying your StudyBunny app with MongoDB Atlas (cloud databa
    ```
 
 4. **Environment Variables**:
+
    ```
    VITE_API_URL=https://studybunny-server.onrender.com
    ```
@@ -109,11 +116,13 @@ This guide covers deploying your StudyBunny app with MongoDB Atlas (cloud databa
 1. Click **"Add Service"** → **"GitHub Repo"**
 2. Select `server` directory
 3. Configure:
+
    ```
    Start Command: npm start
    ```
 
 4. **Variables** (click Variables tab):
+
    ```
    PORT=4000
    MONGODB_URI=mongodb+srv://...
@@ -128,6 +137,7 @@ This guide covers deploying your StudyBunny app with MongoDB Atlas (cloud databa
 1. **Add Service** → **GitHub Repo**
 2. Select `client` directory
 3. **Variables**:
+
    ```
    VITE_API_URL=https://your-backend.railway.app
    ```
@@ -201,7 +211,7 @@ VITE_API_URL=https://your-backend-url.com
 Update `client/src/components/Whiteboard.tsx`:
 
 ```typescript
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 const response = await fetch(`${API_URL}/api/whiteboards/save`, {
   // ...
@@ -211,7 +221,7 @@ const response = await fetch(`${API_URL}/api/whiteboards/save`, {
 Update `client/src/pages/SavedWhiteboard.tsx`:
 
 ```typescript
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 const response = await fetch(`${API_URL}/api/whiteboards/${id}`);
 ```
@@ -221,12 +231,14 @@ const response = await fetch(`${API_URL}/api/whiteboards/${id}`);
 ## Environment Variables Checklist
 
 ### Backend Required:
+
 - ✅ `MONGODB_URI` - MongoDB Atlas connection string
 - ✅ `CORS_ALLOWED_ORIGINS` - Frontend URL(s)
 - ⚠️ `DAILY_API_KEY` - For video meetings (optional)
 - ⚠️ `PORT` - Usually auto-set by platform
 
 ### Frontend Required:
+
 - ✅ `VITE_API_URL` - Backend API URL
 
 ---
@@ -234,18 +246,22 @@ const response = await fetch(`${API_URL}/api/whiteboards/${id}`);
 ## Testing Deployment
 
 ### 1. Test Backend
+
 ```bash
 curl https://your-backend-url.com/
 # Should return: {"status":"ok","time":...}
 ```
 
 ### 2. Test MongoDB Connection
+
 Check logs for:
+
 ```
 ✅ MongoDB: Connected successfully
 ```
 
 ### 3. Test Whiteboard Save
+
 - Visit your frontend URL
 - Join a room
 - Draw on whiteboard
@@ -257,35 +273,43 @@ Check logs for:
 ## Common Issues & Fixes
 
 ### Issue: CORS Error
+
 **Symptom:** `Access to fetch blocked by CORS policy`
 
 **Fix:**
+
 ```env
 # Backend .env
 CORS_ALLOWED_ORIGINS=https://your-frontend.onrender.com,https://www.your-domain.com
 ```
 
 ### Issue: MongoDB Connection Failed
+
 **Symptom:** `MongoServerError: bad auth`
 
 **Fix:**
+
 1. Check MongoDB Atlas → Network Access
 2. Add `0.0.0.0/0` (allow all IPs)
 3. Verify connection string in environment variables
 4. Check username/password have no typos
 
 ### Issue: Whiteboard Not Saving
+
 **Symptom:** 503 error or "Database not available"
 
 **Fix:**
+
 1. Check backend logs for MongoDB connection
 2. Verify `MONGODB_URI` environment variable is set
 3. Test connection with MongoDB Compass
 
 ### Issue: Cold Starts (Render)
+
 **Symptom:** First request takes 30+ seconds
 
 **Solutions:**
+
 - Upgrade to paid plan ($7/month) for always-on
 - Use UptimeRobot to ping every 5 mins (keeps awake)
 - Accept it for free tier 🤷
@@ -297,16 +321,20 @@ CORS_ALLOWED_ORIGINS=https://your-frontend.onrender.com,https://www.your-domain.
 ### Get Your Deployment IPs:
 
 **Render:**
+
 - Not fixed - use `0.0.0.0/0` or upgrade to paid
 
 **Railway:**
+
 - Settings → Networking → Outbound IPs
 - Add each IP to MongoDB whitelist
 
 **Fly.io:**
+
 ```bash
 fly ips list
 ```
+
 - Add IPv4 addresses to MongoDB
 
 ---
@@ -314,22 +342,28 @@ fly ips list
 ## Performance Tips
 
 ### 1. Enable Compression
+
 Already configured in your app with `helmet()`
 
 ### 2. Add Database Indexes
+
 Already done in `Whiteboard` model:
+
 ```javascript
 whiteboardSchema.index({ whiteboardId: 1 });
 whiteboardSchema.index({ createdAt: -1 });
 ```
 
 ### 3. Monitor Performance
+
 - MongoDB Atlas → Metrics
 - Check query performance
 - Set up alerts for slow queries
 
 ### 4. Caching (Optional)
+
 Add Redis for frequently accessed whiteboards:
+
 ```javascript
 // Check cache first, then database
 ```
@@ -339,17 +373,19 @@ Add Redis for frequently accessed whiteboards:
 ## Cost Breakdown
 
 ### Free Tier:
-| Service | Free Tier | Limits |
-|---------|-----------|--------|
-| MongoDB Atlas | FREE Forever | 512MB storage |
-| Render | FREE | 750 hrs/month, cold starts |
-| Railway | $5 credit/month | ~6-7 days runtime |
-| Fly.io | FREE | 3 shared-cpu VMs |
-| Daily.co | FREE | 10K minutes/month |
+
+| Service       | Free Tier       | Limits                     |
+| ------------- | --------------- | -------------------------- |
+| MongoDB Atlas | FREE Forever    | 512MB storage              |
+| Render        | FREE            | 750 hrs/month, cold starts |
+| Railway       | $5 credit/month | ~6-7 days runtime          |
+| Fly.io        | FREE            | 3 shared-cpu VMs           |
+| Daily.co      | FREE            | 10K minutes/month          |
 
 **Total Cost: $0/month** (with limitations)
 
 ### Recommended Paid Upgrade:
+
 - Render Web Service: $7/month (no cold starts)
 - MongoDB Atlas M10: $0.08/hour (~$57/month) for better performance
 - **Total: ~$7-64/month** depending on needs
@@ -359,6 +395,7 @@ Add Redis for frequently accessed whiteboards:
 ## Monitoring & Alerts
 
 ### MongoDB Atlas Alerts:
+
 1. Database → Alerts
 2. Set up:
    - Connection failures
@@ -366,6 +403,7 @@ Add Redis for frequently accessed whiteboards:
    - Slow queries
 
 ### Deployment Platform:
+
 - Check logs regularly
 - Set up uptime monitoring (UptimeRobot, Pingdom)
 - Monitor error rates
@@ -375,10 +413,12 @@ Add Redis for frequently accessed whiteboards:
 ## Backup Strategy
 
 ### MongoDB Atlas (FREE):
+
 ✅ Automated daily backups (retained 2 days)
 ✅ Point-in-time restore (M10+ only)
 
 ### Manual Backup:
+
 ```bash
 # Export all whiteboards
 curl https://your-backend.com/api/whiteboards > backup.json
@@ -393,10 +433,12 @@ curl https://your-backend.com/api/whiteboards > backup.json
 1. **Buy domain** (Namecheap, Google Domains, etc.)
 
 2. **Add to Render/Railway/Fly:**
+
    - Settings → Custom Domain
    - Add: `studybunny.com`
 
 3. **DNS Records:**
+
    ```
    Type: CNAME
    Name: @
@@ -434,7 +476,7 @@ curl https://your-backend.com/api/whiteboards > backup.json
 ✅ Rate limiting (add `express-rate-limit`)  
 ✅ Input validation  
 ✅ CORS configured properly  
-✅ Helmet.js security headers (already added)  
+✅ Helmet.js security headers (already added)
 
 ---
 

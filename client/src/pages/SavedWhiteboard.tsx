@@ -47,8 +47,12 @@ const SavedWhiteboard: React.FC = () => {
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center">
         <div className="text-center">
           <div className="text-6xl mb-4">⏳</div>
-          <h2 className="text-2xl font-bold text-slate-800 mb-2">Loading Whiteboard...</h2>
-          <p className="text-slate-600">Please wait while we fetch your saved drawing.</p>
+          <h2 className="text-2xl font-bold text-slate-800 mb-2">
+            Loading Whiteboard...
+          </h2>
+          <p className="text-slate-600">
+            Please wait while we fetch your saved drawing.
+          </p>
         </div>
       </div>
     );
@@ -59,7 +63,9 @@ const SavedWhiteboard: React.FC = () => {
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center">
         <div className="text-center max-w-md">
           <div className="text-6xl mb-4">❌</div>
-          <h2 className="text-2xl font-bold text-slate-800 mb-2">Whiteboard Not Found</h2>
+          <h2 className="text-2xl font-bold text-slate-800 mb-2">
+            Whiteboard Not Found
+          </h2>
           <p className="text-slate-600 mb-6">{error}</p>
           <button
             onClick={() => navigate("/")}
@@ -129,10 +135,13 @@ const SavedWhiteboard: React.FC = () => {
           <div className="flex items-start gap-3">
             <div className="text-2xl">ℹ️</div>
             <div>
-              <h3 className="font-semibold text-blue-900 mb-1">View-Only Mode</h3>
+              <h3 className="font-semibold text-blue-900 mb-1">
+                View-Only Mode
+              </h3>
               <p className="text-sm text-blue-800">
-                This is a saved snapshot of the whiteboard. You can view and export it, but changes won't be saved.
-                To collaborate in real-time, join a study room!
+                This is a saved snapshot of the whiteboard. You can view and
+                export it, but changes won't be saved. To collaborate in
+                real-time, join a study room!
               </p>
             </div>
           </div>

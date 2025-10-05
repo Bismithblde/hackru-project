@@ -23,7 +23,7 @@ const CORS_ORIGIN = process.env.CORS_ALLOWED_ORIGINS
   ? process.env.CORS_ALLOWED_ORIGINS.split(",").map((o) => o.trim())
   : "*";
 
-console.log('🌐 CORS Configuration:', CORS_ORIGIN);
+console.log("🌐 CORS Configuration:", CORS_ORIGIN);
 
 const app = express();
 app.use(helmet());
@@ -121,7 +121,7 @@ server.listen(PORT, "0.0.0.0", async () => {
   console.log(`🌐 CORS Origins: ${CORS_ORIGIN}`);
   console.log(`${"=".repeat(50)}\n`);
   console.log(`Network access: http://192.168.40.38:${PORT}`);
-  
+
   // Connect to MongoDB after server starts
   await connectDB();
 });

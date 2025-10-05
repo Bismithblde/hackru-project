@@ -57,7 +57,9 @@ class ExcalidrawErrorBoundary extends React.Component<
 const Whiteboard: React.FC<WhiteboardProps> = ({ socket, roomId }) => {
   const [excalidrawAPI, setExcalidrawAPI] = useState<any>(null);
   const [isCollaborating, setIsCollaborating] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [saveStatus, setSaveStatus] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
 
   // Handle incoming whiteboard updates from other users
   useEffect(() => {
@@ -98,15 +100,15 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ socket, roomId }) => {
     if (!excalidrawAPI) return;
 
     try {
-      setSaveStatus('saving');
-      
+      setSaveStatus("saving");
+
       const elements = excalidrawAPI.getSceneElements();
       const appState = excalidrawAPI.getAppState();
 
       const response = await fetch(`${SERVER_URL}/api/whiteboards/save`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           elements,
@@ -115,32 +117,40 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ socket, roomId }) => {
         }),
       });
 
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+        throw new Error(errorData.error || `Server returned ${response.status}`);
+      }
+
       const data = await response.json();
 
       if (data.success) {
-        setSaveStatus('saved');
-        
+        setSaveStatus("saved");
+
         // Copy to clipboard
         if (navigator.clipboard) {
           await navigator.clipboard.writeText(data.shareableLink);
-          alert(`Whiteboard saved! Link copied to clipboard:\n${data.shareableLink}`);
+          alert(
+            `Whiteboard saved! Link copied to clipboard:\n${data.shareableLink}`
+          );
         } else {
           alert(`Whiteboard saved! Share this link:\n${data.shareableLink}`);
         }
-        
+
         // Reset status after 3 seconds
         setTimeout(() => {
-          setSaveStatus('idle');
+          setSaveStatus("idle");
         }, 3000);
       } else {
-        throw new Error('Failed to save');
+        throw new Error(data.error || "Failed to save");
       }
     } catch (error) {
-      console.error('Error saving whiteboard:', error);
-      setSaveStatus('error');
-      alert('Failed to save whiteboard. Please try again.');
+      console.error("Error saving whiteboard:", error);
+      setSaveStatus("error");
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      alert(`Failed to save whiteboard: ${errorMessage}`);
       setTimeout(() => {
-        setSaveStatus('idle');
+        setSaveStatus("idle");
       }, 3000);
     }
   };
@@ -155,23 +165,23 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ socket, roomId }) => {
         <div className="flex justify-between items-center px-2">
           <button
             onClick={handleSaveWhiteboard}
-            disabled={saveStatus === 'saving' || !excalidrawAPI}
+            disabled={saveStatus === "saving" || !excalidrawAPI}
             className={`px-4 py-2 rounded-lg font-medium text-sm shadow transition-all ${
-              saveStatus === 'saved'
-                ? 'bg-green-500 text-white'
-                : saveStatus === 'saving'
-                ? 'bg-slate-400 text-white cursor-wait'
-                : saveStatus === 'error'
-                ? 'bg-red-500 text-white'
-                : 'bg-indigo-600 text-white hover:bg-indigo-700'
+              saveStatus === "saved"
+                ? "bg-green-500 text-white"
+                : saveStatus === "saving"
+                ? "bg-slate-400 text-white cursor-wait"
+                : saveStatus === "error"
+                ? "bg-red-500 text-white"
+                : "bg-indigo-600 text-white hover:bg-indigo-700"
             }`}
           >
-            {saveStatus === 'saving' && '⏳ Saving...'}
-            {saveStatus === 'saved' && '✓ Saved!'}
-            {saveStatus === 'error' && '✗ Error'}
-            {saveStatus === 'idle' && '💾 Save Whiteboard'}
+            {saveStatus === "saving" && "⏳ Saving..."}
+            {saveStatus === "saved" && "✓ Saved!"}
+            {saveStatus === "error" && "✗ Error"}
+            {saveStatus === "idle" && "💾 Save Whiteboard"}
           </button>
-          
+
           <button
             onClick={() => setIsCollaborating(!isCollaborating)}
             className={`px-4 py-2 rounded-lg font-medium text-sm shadow transition-all ${

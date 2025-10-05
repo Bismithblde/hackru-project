@@ -97,9 +97,7 @@ const Quiz: React.FC<QuizProps> = ({ onSubmitAnswer }) => {
           <p className="text-4xl font-bold text-indigo-600 mb-2">
             {score} / {PLACEHOLDER_QUIZ.length}
           </p>
-          <p className="text-lg text-slate-600">
-            {percentage}% correct
-          </p>
+          <p className="text-lg text-slate-600">{percentage}% correct</p>
         </div>
 
         <button
@@ -133,7 +131,9 @@ const Quiz: React.FC<QuizProps> = ({ onSubmitAnswer }) => {
           <div
             className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500"
             style={{
-              width: `${((currentQuestionIndex + 1) / PLACEHOLDER_QUIZ.length) * 100}%`,
+              width: `${
+                ((currentQuestionIndex + 1) / PLACEHOLDER_QUIZ.length) * 100
+              }%`,
             }}
           />
         </div>
@@ -185,8 +185,12 @@ const Quiz: React.FC<QuizProps> = ({ onSubmitAnswer }) => {
                         : "border-slate-400"
                     }`}
                   >
-                    {showCorrect && <span className="text-white text-sm">✓</span>}
-                    {showIncorrect && <span className="text-white text-sm">✕</span>}
+                    {showCorrect && (
+                      <span className="text-white text-sm">✓</span>
+                    )}
+                    {showIncorrect && (
+                      <span className="text-white text-sm">✕</span>
+                    )}
                     {!answered && isSelected && (
                       <span className="w-3 h-3 bg-white rounded-full" />
                     )}

@@ -16,6 +16,7 @@ This feature allows users to save their Excalidraw whiteboards and share them vi
 ### Technical Implementation
 
 #### Backend
+
 - **Storage**: JSON files in `server/saved-whiteboards/` directory
 - **API Endpoints**:
   - `POST /api/whiteboards/save` - Save a whiteboard
@@ -24,6 +25,7 @@ This feature allows users to save their Excalidraw whiteboards and share them vi
   - `DELETE /api/whiteboards/:id` - Delete a whiteboard
 
 #### Frontend
+
 - **Save Button**: Added to Whiteboard component (left side)
 - **Route**: `/whiteboard/:id` - View saved whiteboards
 - **Component**: `SavedWhiteboard.tsx` - Dedicated viewer page
@@ -44,6 +46,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -60,6 +63,7 @@ GET http://localhost:4000/api/whiteboards/a1b2c3d4e5f6g7h8
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -104,6 +108,7 @@ client/
 ## Limitations & Future Enhancements
 
 ### Current Limitations
+
 - No authentication - anyone with the link can view
 - No expiration - files persist forever
 - No edit tracking - can't see who modified what
@@ -112,6 +117,7 @@ client/
 ### Possible Enhancements
 
 1. **Add Expiration**
+
    ```javascript
    // Auto-delete whiteboards after 30 days
    const expirationDate = new Date();
@@ -119,16 +125,19 @@ client/
    ```
 
 2. **Add Authentication**
+
    - Require login to save whiteboards
    - Only creator can edit/delete
    - Share permissions (view-only vs edit)
 
 3. **Version History**
+
    - Save multiple snapshots over time
    - "Time travel" through changes
    - Compare different versions
 
 4. **Database Migration**
+
    - Move from files to MongoDB/PostgreSQL
    - Better querying and management
    - Add metadata (tags, descriptions, thumbnails)
@@ -136,7 +145,7 @@ client/
 5. **Rate Limiting**
    ```javascript
    // Limit saves per IP/user
-   const rateLimit = require('express-rate-limit');
+   const rateLimit = require("express-rate-limit");
    ```
 
 ## Security Considerations
@@ -150,6 +159,7 @@ client/
 - No CORS restrictions on whiteboard endpoints
 
 **For Production:**
+
 - Add authentication/authorization
 - Implement rate limiting
 - Validate and sanitize whiteboard content
@@ -161,34 +171,36 @@ client/
 ## Example Usage
 
 ### Save Current Whiteboard
+
 ```typescript
 // In Whiteboard component
 const handleSave = async () => {
   const elements = excalidrawAPI.getSceneElements();
   const appState = excalidrawAPI.getAppState();
-  
-  const response = await fetch('/api/whiteboards/save', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ elements, appState, roomId })
+
+  const response = await fetch("/api/whiteboards/save", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ elements, appState, roomId }),
   });
-  
+
   const data = await response.json();
-  console.log('Saved:', data.shareableLink);
+  console.log("Saved:", data.shareableLink);
 };
 ```
 
 ### Load Saved Whiteboard
+
 ```typescript
 // In SavedWhiteboard component
 const loadWhiteboard = async (id: string) => {
   const response = await fetch(`/api/whiteboards/${id}`);
   const data = await response.json();
-  
+
   if (data.success) {
     excalidrawAPI.updateScene({
       elements: data.whiteboard.elements,
-      appState: data.whiteboard.appState
+      appState: data.whiteboard.appState,
     });
   }
 };
@@ -213,16 +225,19 @@ curl -X POST http://localhost:4000/api/whiteboards/save \
 ## Troubleshooting
 
 **Issue: "Failed to save whiteboard"**
+
 - Check server logs for errors
 - Ensure `saved-whiteboards` directory exists and is writable
 - Verify fetch URL matches server port
 
 **Issue: "Whiteboard not found"**
+
 - Verify the ID in the URL is correct
 - Check that the JSON file exists in `saved-whiteboards/`
 - Check server logs for file access errors
 
 **Issue: "Link not copying to clipboard"**
+
 - Requires HTTPS in production (clipboard API restriction)
 - Fallback alert shows the link if copy fails
 
@@ -231,16 +246,19 @@ curl -X POST http://localhost:4000/api/whiteboards/save \
 When deploying to production:
 
 1. **Environment Variables**
+
    ```bash
    FRONTEND_URL=https://yourdomain.com
    ```
 
 2. **Update Save Handler**
+
    ```javascript
-   shareableLink: `${process.env.FRONTEND_URL}/whiteboard/${whiteboardId}`
+   shareableLink: `${process.env.FRONTEND_URL}/whiteboard/${whiteboardId}`;
    ```
 
 3. **Consider Cloud Storage**
+
    - AWS S3
    - Google Cloud Storage
    - Azure Blob Storage

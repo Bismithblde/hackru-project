@@ -16,7 +16,8 @@ A real-time collaborative study platform built for HackRU with video meetings, w
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 18+ 
+
+- Node.js 18+
 - MongoDB Atlas account (FREE - see setup guide)
 - Daily.co API key (FREE - for video)
 
@@ -41,6 +42,7 @@ npm install
 **See detailed guide:** [`MONGODB_SETUP.md`](./MONGODB_SETUP.md)
 
 Quick steps:
+
 1. Create free account at https://cloud.mongodb.com
 2. Create M0 FREE cluster
 3. Create database user
@@ -49,6 +51,7 @@ Quick steps:
 ### Environment Variables
 
 Create `server/.env`:
+
 ```env
 PORT=4000
 MONGODB_URI=mongodb+srv://your-user:password@cluster.mongodb.net/studybunny
@@ -63,7 +66,7 @@ CORS_ALLOWED_ORIGINS=http://localhost:5173
 cd server
 npm run dev
 
-# Terminal 2 - Start frontend  
+# Terminal 2 - Start frontend
 cd client
 npm run dev
 ```
@@ -80,6 +83,7 @@ Visit: http://localhost:5173
 ## 🏗️ Tech Stack
 
 ### Frontend
+
 - **React 18** - UI library
 - **TypeScript** - Type safety
 - **Vite** - Fast build tool
@@ -89,12 +93,14 @@ Visit: http://localhost:5173
 - **Daily.co** - Video meetings
 
 ### Backend
+
 - **Node.js + Express** - Server framework
 - **Socket.io** - WebSocket server
 - **MongoDB + Mongoose** - Database
 - **Daily.co API** - Video infrastructure
 
 ### Infrastructure
+
 - **MongoDB Atlas** - Cloud database (FREE tier)
 - **Render/Railway** - Deployment platforms
 - **Daily.co** - Video infrastructure
@@ -139,29 +145,34 @@ hackru-project/
 ## 🎮 Usage
 
 ### Creating a Room
+
 1. Click "Create Room"
 2. Enter room name and code
 3. Set your username
 4. Share the code with friends!
 
 ### Joining a Room
-1. Click "Join Room"  
+
+1. Click "Join Room"
 2. Enter room code
 3. Set your username
 4. Start collaborating!
 
 ### Using the Whiteboard
+
 - Draw, write, and create shapes
 - Toggle "Live Sync ON" for real-time collaboration
 - Click "Save Whiteboard" to get a shareable link
 - Expand to fullscreen for better drawing experience
 
 ### Video Meeting
+
 - Click "Show Meeting" to toggle video
 - Join the Daily.co room automatically
 - Mute/unmute audio/video as needed
 
 ### Chat & Points
+
 - Send messages in the chat
 - Earn points for participation
 - Compete on the leaderboard
@@ -173,6 +184,7 @@ hackru-project/
 See **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** for full instructions.
 
 Quick deploy:
+
 1. Push to GitHub
 2. Connect to Render/Railway
 3. Set environment variables
@@ -181,21 +193,24 @@ Quick deploy:
 ## 🔒 Environment Variables
 
 ### Server
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `MONGODB_URI` | ✅ Yes | MongoDB Atlas connection string |
-| `CORS_ALLOWED_ORIGINS` | ✅ Yes | Frontend URL(s) for CORS |
-| `DAILY_API_KEY` | ⚠️ Optional | For video meetings |
-| `PORT` | ⚠️ Optional | Server port (default: 4000) |
 
-### Client  
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `VITE_API_URL` | ✅ Yes | Backend API URL |
+| Variable               | Required    | Description                     |
+| ---------------------- | ----------- | ------------------------------- |
+| `MONGODB_URI`          | ✅ Yes      | MongoDB Atlas connection string |
+| `CORS_ALLOWED_ORIGINS` | ✅ Yes      | Frontend URL(s) for CORS        |
+| `DAILY_API_KEY`        | ⚠️ Optional | For video meetings              |
+| `PORT`                 | ⚠️ Optional | Server port (default: 4000)     |
+
+### Client
+
+| Variable       | Required | Description     |
+| -------------- | -------- | --------------- |
+| `VITE_API_URL` | ✅ Yes   | Backend API URL |
 
 ## 💾 Database Schema
 
 ### Whiteboards Collection
+
 ```javascript
 {
   whiteboardId: String,     // Unique ID
