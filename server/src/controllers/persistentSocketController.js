@@ -7,6 +7,9 @@ const { isRedisAvailable } = require("../config/redis");
  * Integrates real-time events with persistent storage
  */
 function createPersistentSocketController(io, roomService) {
+  // Track study time for automatic points
+  const studyTimers = new Map(); // roomId -> Map(userId -> startTime)
+
   function register(socket) {
     let lastAwardTs = 0;
 
@@ -68,6 +71,13 @@ function createPersistentSocketController(io, roomService) {
         // Broadcast presence update to all users in room
         const users = roomService.getUsers(roomId);
         io.to(roomId).emit("presence:update", users);
+
+        // Start study timer
+        if (!studyTimers.has(roomId)) {
+          studyTimers.set(roomId, new Map());
+        }
+        studyTimers.get(roomId).set(userId, Date.now());
+        console.log(`[Points] Started study timer for ${username}`);
       } catch (error) {
         console.error("[Socket] Error in join handler:", error);
         socket.emit("error", { message: "Failed to join room" });
@@ -95,6 +105,29 @@ function createPersistentSocketController(io, roomService) {
         // Broadcast presence update
         const users = roomService.getUsers(roomId);
         io.to(roomId).emit("presence:update", users);
+
+        // Calculate study time and award points
+        if (userId && studyTimers.has(roomId)) {
+          const roomTimers = studyTimers.get(roomId);
+          if (roomTimers.has(userId)) {
+            const startTime = roomTimers.get(userId);
+            const studyMinutes = Math.floor((Date.now() - startTime) / 60000);
+            
+            if (studyMinutes >= 1) {
+              // Award 1 point per minute of study
+              const pointsEarned = studyMinutes;
+              roomService.addPoints(roomId, userId, "Study Session", pointsEarned);
+              
+              const leaderboard = roomService.getLeaderboard(roomId);
+              io.to(roomId).emit("points:update", { roomId, leaderboard });
+              
+              console.log(`[Points] Awarded ${pointsEarned} points to ${userId} for ${studyMinutes} minutes`);
+            }
+            
+            roomTimers.delete(userId);
+            if (roomTimers.size === 0) studyTimers.delete(roomId);
+          }
+        }
 
         console.log(`[Socket] User ${userId} left room ${roomId}`);
       } catch (error) {
@@ -234,6 +267,28 @@ function createPersistentSocketController(io, roomService) {
       for (const [roomId] of roomService.rooms) {
         const users = roomService.getUsers(roomId);
         io.to(roomId).emit("presence:update", users);
+
+        // Award study time points before removing user
+        if (userInfo && userInfo.userId && studyTimers.has(roomId)) {
+          const roomTimers = studyTimers.get(roomId);
+          if (roomTimers.has(userInfo.userId)) {
+            const startTime = roomTimers.get(userInfo.userId);
+            const studyMinutes = Math.floor((Date.now() - startTime) / 60000);
+            
+            if (studyMinutes >= 1) {
+              const pointsEarned = studyMinutes;
+              roomService.addPoints(roomId, userInfo.userId, userInfo.username, pointsEarned);
+              
+              const leaderboard = roomService.getLeaderboard(roomId);
+              io.to(roomId).emit("points:update", { roomId, leaderboard });
+              
+              console.log(`[Points] Awarded ${pointsEarned} points to ${userInfo.username} before disconnect`);
+            }
+            
+            roomTimers.delete(userInfo.userId);
+            if (roomTimers.size === 0) studyTimers.delete(roomId);
+          }
+        }
 
         // Remove from Redis if we have user info
         if (userInfo && userInfo.userId) {
