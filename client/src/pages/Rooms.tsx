@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { CreateRoomModal } from "../components/CreateRoomModal";
 import { JoinRoomModal } from "../components/JoinRoomModal";
 import { useRoomContext } from "../contexts/RoomContext";
@@ -8,6 +9,7 @@ const Rooms = () => {
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const { rooms, fetchRooms, loading } = useRoomContext();
+  const navigate = useNavigate();
 
   // Fetch rooms on mount
   useEffect(() => {
@@ -18,6 +20,10 @@ const Rooms = () => {
     navigator.clipboard.writeText(code);
     setCopiedCode(code);
     setTimeout(() => setCopiedCode(null), 2000);
+  };
+
+  const handleJoinRoom = (code: string) => {
+    navigate(`/room/${code}`);
   };
 
   return (
@@ -105,16 +111,24 @@ const Rooms = () => {
                       : "participants"}
                   </p>
                 </div>
-                <button
-                  onClick={() => handleCopyCode(room.code)}
-                  className={`px-4 py-2 text-sm rounded-lg transition-colors ${
-                    copiedCode === room.code
-                      ? "bg-green-600 text-white"
-                      : "bg-indigo-600 text-white hover:bg-indigo-700"
-                  }`}
-                >
-                  {copiedCode === room.code ? "✓ Copied!" : "Copy Code"}
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleCopyCode(room.code)}
+                    className={`px-4 py-2 text-sm rounded-lg transition-colors ${
+                      copiedCode === room.code
+                        ? "bg-green-600 text-white"
+                        : "bg-slate-200 text-slate-700 hover:bg-slate-300"
+                    }`}
+                  >
+                    {copiedCode === room.code ? "✓ Copied!" : "Copy Code"}
+                  </button>
+                  <button
+                    onClick={() => handleJoinRoom(room.code)}
+                    className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+                  >
+                    Join Room
+                  </button>
+                </div>
               </div>
             ))}
           </div>

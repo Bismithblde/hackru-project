@@ -9,7 +9,7 @@ const mongoRoomService = require("../services/mongoRoomService");
 // POST /api/rooms/create - Create a new room
 router.post("/create", async (req, res) => {
   try {
-    const { name, createdBy, description, maxParticipants, settings } =
+    const { name, createdBy, description, maxParticipants, settings, isPrivate } =
       req.body;
 
     if (!name || !createdBy) {
@@ -25,6 +25,7 @@ router.post("/create", async (req, res) => {
       description,
       maxParticipants,
       settings,
+      isPrivate,
     });
 
     console.log(`[Room Created] Code: ${room.code}, Name: ${name}`);

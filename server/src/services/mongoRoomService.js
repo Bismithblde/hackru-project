@@ -15,6 +15,7 @@ class MongoRoomService {
     description = "",
     maxParticipants = 10,
     settings = {},
+    isPrivate = false,
   }) {
     try {
       const code = await Room.generateUniqueCode();
@@ -25,6 +26,7 @@ class MongoRoomService {
         createdBy,
         description,
         maxParticipants,
+        isPrivate,
         settings: {
           isPublic: settings.isPublic !== false,
           allowChat: settings.allowChat !== false,
@@ -392,6 +394,7 @@ class MongoRoomService {
       lastActivityAt: room.lastActivityAt.getTime(),
       maxParticipants: room.maxParticipants,
       participantCount: activeParticipants.length,
+      isPrivate: room.isPrivate || false,
       participants: activeParticipants.map((p) => ({
         userId: p.userId,
         username: p.username,

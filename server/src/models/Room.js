@@ -52,6 +52,13 @@ const roomSchema = new mongoose.Schema(
       trim: true,
     },
 
+    // Privacy setting
+    isPrivate: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+
     // Room description (optional)
     description: {
       type: String,
@@ -271,9 +278,11 @@ roomSchema.methods.getLeaderboard = function () {
     .sort((a, b) => b.points - a.points);
 };
 
-// Static method to find active rooms
+// Static method to find active rooms (excluding private rooms)
 roomSchema.statics.findActive = function () {
-  return this.find({ isActive: true }).sort({ lastActivityAt: -1 }).limit(100);
+  return this.find({ isActive: true, isPrivate: { $ne: true } })
+    .sort({ lastActivityAt: -1 })
+    .limit(100);
 };
 
 // Static method to find by creator
