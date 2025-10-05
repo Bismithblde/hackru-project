@@ -7,6 +7,7 @@ import {
   useSpring,
   useInView,
 } from "framer-motion";
+import bunnyLogo from "../assets/bunny.png";
 
 const Home: React.FC = () => {
   const heroRef = useRef<HTMLDivElement>(null);
@@ -21,70 +22,53 @@ const Home: React.FC = () => {
   });
 
   // Hero parallax effects
-  const heroY = useTransform(smoothProgress, [0, 0.5], [0, 200]);
-  const heroOpacity = useTransform(smoothProgress, [0, 0.3], [1, 0]);
-  const heroScale = useTransform(smoothProgress, [0, 0.3], [1, 0.95]);
-
-  // Background blobs
-  const blob1Y = useTransform(smoothProgress, [0, 1], [0, 300]);
-  const blob2Y = useTransform(smoothProgress, [0, 1], [0, -200]);
+  const heroY = useTransform(smoothProgress, [0, 0.8], [0, 300]);
+  const heroScale = useTransform(smoothProgress, [0, 0.5], [1, 0.95]);
+  
+  // Buttons fade out faster but start later
+  const buttonsOpacity = useTransform(smoothProgress, [0.15, 0.3], [1, 0]);
 
   return (
     <div className="relative bg-slate-50 overflow-hidden">
       {/* Hero Section */}
       <section className="min-h-screen flex items-center justify-center relative">
-        {/* Animated Background decoration */}
-        <motion.div
-          className="absolute top-1/4 -left-40 w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30"
-          style={{ y: blob1Y }}
-        />
-        <motion.div
-          className="absolute bottom-1/4 -right-40 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30"
-          style={{ y: blob2Y }}
-        />
-
         <motion.div
           ref={heroRef}
           className="relative z-10 max-w-5xl mx-auto px-6 text-center"
           style={{
             y: heroY,
-            opacity: heroOpacity,
             scale: heroScale,
           }}
         >
           {/* Animated Icon */}
           <motion.div
-            className="flex justify-center mb-8"
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{ scale: 1, rotate: 0 }}
+            className="flex justify-center mb-4"
+            initial={{ scale: 0, y: -100, rotate: -180 }}
+            animate={{ scale: 1, y: 0, rotate: 0 }}
             transition={{
               type: "spring",
               stiffness: 200,
-              damping: 20,
+              damping: 15,
               delay: 0.2,
             }}
           >
-            <div className="relative">
-              <motion.div
-                className="absolute inset-0 bg-indigo-600 rounded-3xl blur-xl opacity-50"
-                animate={{
-                  scale: [1, 1.2, 1],
-                  opacity: [0.5, 0.3, 0.5],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-              />
-              <motion.div
-                className="relative w-24 h-24 bg-indigo-600 rounded-3xl flex items-center justify-center"
-                whileHover={{ scale: 1.1, rotate: 5 }}
+            <motion.div
+              className="relative"
+              animate={{ y: [0, -15, 0] }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+            >
+              <motion.img
+                src={bunnyLogo}
+                alt="StudyBunny Logo"
+                className="w-96 h-96 md:w-[500px] md:h-[500px] lg:w-[600px] lg:h-[600px] object-contain"
+                whileHover={{ scale: 1.1, rotate: 10 }}
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
-              >
-                <span className="text-5xl">📚</span>
-              </motion.div>
-            </div>
+              />
+            </motion.div>
           </motion.div>
 
           {/* Hero Text with stagger animation */}
@@ -123,6 +107,7 @@ const Home: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7, duration: 0.6 }}
+            style={{ opacity: buttonsOpacity }}
           >
             <Link to="/rooms">
               <motion.button

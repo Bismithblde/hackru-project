@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import Home from "./pages/Home";
 import Rooms from "./pages/Rooms";
 import Room from "./pages/Room";
+import bunnyLogo from "./assets/bunny.png";
 
 const App: React.FC = () => {
   return (
@@ -16,8 +17,12 @@ const App: React.FC = () => {
         <header className="bg-white border-b sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
             <Link to="/" className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
-                <span className="text-white text-xl font-bold">📚</span>
+              <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center overflow-hidden">
+                <img 
+                  src={bunnyLogo} 
+                  alt="StudyBunny Logo" 
+                  className="w-8 h-8 object-contain"
+                />
               </div>
               <h1 className="text-2xl font-bold text-slate-900">StudyBunny</h1>
             </Link>
