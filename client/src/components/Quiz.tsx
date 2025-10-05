@@ -47,18 +47,23 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
 
   useEffect(() => {
     const socket = getSocket();
-    if (!socket) return;
+    if (!socket) {
+      console.error("[Quiz] No socket available!");
+      return;
+    }
+
+    console.log("[Quiz] Setting up event listeners for room:", roomId);
 
     // Listen for quiz events
     const handleQuizCreated = (data: any) => {
-      console.log("[Quiz] Quiz created:", data);
+      console.log("[Quiz] ✅ Quiz created event received:", data);
       setActiveQuiz(data.quiz);
       setShowCreateForm(false);
       setErrorMessage("");
     };
 
     const handleQuizStarted = (data: any) => {
-      console.log("[Quiz] Quiz started:", data);
+      console.log("[Quiz] ✅ Quiz started event received:", data);
       setActiveQuiz(data.quiz);
       setCurrentQuestionIndex(0);
       setScore(0);
@@ -80,7 +85,7 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
     };
 
     const handleQuizEnded = (data: any) => {
-      console.log("[Quiz] Quiz ended:", data);
+      console.log("[Quiz] ✅ Quiz ended event received:", data);
       
       // Show results if available
       if (data.results && data.results.length > 0) {
@@ -93,25 +98,29 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
     };
 
     const handleAnswerSubmitted = (data: any) => {
-      console.log("[Quiz] Answer submitted:", data);
+      console.log("[Quiz] ✅ Answer submitted event received:", data);
     };
 
     const handleQuizError = (data: any) => {
-      console.error("[Quiz] Error:", data.message);
+      console.error("[Quiz] ❌ Quiz error event received:", data);
       setErrorMessage(data.message || "An error occurred");
       setTimeout(() => setErrorMessage(""), 5000);
     };
 
+    console.log("[Quiz] Registering event listeners...");
     on(SOCKET_EVENTS.QUIZ_CREATED, handleQuizCreated);
     on(SOCKET_EVENTS.QUIZ_STARTED, handleQuizStarted);
     on(SOCKET_EVENTS.QUIZ_ENDED, handleQuizEnded);
     on(SOCKET_EVENTS.QUIZ_ANSWER_SUBMITTED, handleAnswerSubmitted);
     on(SOCKET_EVENTS.QUIZ_ERROR, handleQuizError);
+    console.log("[Quiz] Event listeners registered");
 
     // Request current quiz state
+    console.log("[Quiz] Requesting current quiz state for room:", roomId);
     emit(SOCKET_EVENTS.QUIZ_GET_STATE, { roomId });
 
     return () => {
+      console.log("[Quiz] Cleaning up event listeners");
       off(SOCKET_EVENTS.QUIZ_CREATED, handleQuizCreated);
       off(SOCKET_EVENTS.QUIZ_STARTED, handleQuizStarted);
       off(SOCKET_EVENTS.QUIZ_ENDED, handleQuizEnded);
@@ -121,8 +130,13 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
   }, [roomId]);
 
   const handleCreateQuiz = () => {
+    console.log("[Quiz] handleCreateQuiz called");
+    console.log("[Quiz] Quiz title:", quizTitle);
+    console.log("[Quiz] Questions:", questions);
+    
     if (!quizTitle.trim()) {
       setErrorMessage("Please enter a quiz title");
+      console.error("[Quiz] Validation failed: no title");
       return;
     }
 
@@ -131,10 +145,12 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
       const q = questions[i];
       if (!q.question.trim()) {
         setErrorMessage(`Please enter question ${i + 1}`);
+        console.error(`[Quiz] Validation failed: question ${i + 1} is empty`);
         return;
       }
       if (q.options.some((opt) => !opt.trim())) {
         setErrorMessage(`Please fill all options for question ${i + 1}`);
+        console.error(`[Quiz] Validation failed: question ${i + 1} has empty options`);
         return;
       }
     }
@@ -146,7 +162,9 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
       createdBy: username,
     };
 
+    console.log("[Quiz] Emitting quiz:create with payload:", { roomId, quiz });
     emit(SOCKET_EVENTS.QUIZ_CREATE, { roomId, quiz });
+    console.log("[Quiz] Quiz create event emitted successfully");
   };
 
   const handleStartQuiz = () => {

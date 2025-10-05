@@ -21,16 +21,25 @@ async function getRoomOwner(roomId) {
 }
 
 function registerQuizEvents(socket, io, roomService) {
+  console.log(`[Quiz] Registering quiz events for socket ${socket.id}`);
+  
   /**
    * Get current quiz state for a room
    */
   socket.on('quiz:getState', (payload) => {
+    console.log(`[Quiz] quiz:getState called by ${socket.id}:`, payload);
     const { roomId } = payload;
-    if (!roomId) return;
+    if (!roomId) {
+      console.error(`[Quiz] quiz:getState: no roomId provided`);
+      return;
+    }
 
     const quiz = roomQuizzes.get(roomId);
     if (quiz) {
+      console.log(`[Quiz] Sending existing quiz to socket ${socket.id}:`, quiz.title);
       socket.emit('quiz:created', { roomId, quiz });
+    } else {
+      console.log(`[Quiz] No quiz found for room ${roomId}`);
     }
   });
 
@@ -38,28 +47,36 @@ function registerQuizEvents(socket, io, roomService) {
    * Create a new quiz (owner only)
    */
   socket.on('quiz:create', async (payload) => {
+    console.log(`[Quiz] ✅ quiz:create received from ${socket.id}:`, payload);
     const { roomId, quiz } = payload;
     if (!roomId || !quiz) {
+      console.error(`[Quiz] quiz:create: Invalid data - roomId: ${roomId}, quiz:`, quiz);
       return socket.emit('quiz:error', { message: 'Invalid quiz data' });
     }
 
+    console.log(`[Quiz] Verifying owner for room ${roomId}...`);
     // Verify owner
     const owner = await getRoomOwner(roomId);
+    console.log(`[Quiz] Room owner: ${owner}, Quiz creator: ${quiz.createdBy}`);
+    
     if (!owner || quiz.createdBy !== owner) {
+      console.error(`[Quiz] Owner validation failed! Owner: ${owner}, Creator: ${quiz.createdBy}`);
       return socket.emit('quiz:error', { 
         message: 'Only the room owner can create quizzes' 
       });
     }
 
+    console.log(`[Quiz] Owner validated, storing quiz...`);
     // Store quiz for room
     roomQuizzes.set(roomId, quiz);
     
     // Initialize scores for this room
     roomScores.set(roomId, new Map());
 
+    console.log(`[Quiz] Broadcasting quiz:created to room ${roomId}...`);
     // Broadcast to all users in room
     io.to(roomId).emit('quiz:created', { roomId, quiz });
-    console.log(`[Quiz] Quiz created in room ${roomId}: ${quiz.title} by ${quiz.createdBy}`);
+    console.log(`[Quiz] ✅ Quiz created and broadcast successfully: "${quiz.title}" by ${quiz.createdBy}`);
   });
 
   /**
