@@ -6,6 +6,7 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 const { Server } = require("socket.io");
 const { connectDB, disconnectDB } = require("./config/database");
+const { closeRedis } = require("./config/redis"); // Initialize Redis
 const { createRoomService } = require("./services/roomService");
 const { createSocketController } = require("./controllers/socketController");
 const { createDailyRoom } = require("./services/dailyService");
@@ -86,6 +87,9 @@ const shutdown = async () => {
   try {
     // Disconnect from MongoDB
     await disconnectDB();
+
+    // Close Redis connection
+    await closeRedis();
 
     // Close Socket.io connections
     io.close(() => {
