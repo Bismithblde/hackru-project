@@ -105,13 +105,15 @@ const Room: React.FC = () => {
 
   const handleSendMessage = (message: string) => {
     if (message.trim()) {
-      emit(SOCKET_EVENTS.CHAT_MESSAGE, {
+      const payload = {
         roomId: roomId,
         userId: userIdRef.current,
         username: username,
         message: message.trim(),
         ts: Date.now(),
-      });
+      };
+      console.log("[Room] Sending message:", payload);
+      emit(SOCKET_EVENTS.CHAT_MESSAGE, payload);
     }
   };
 

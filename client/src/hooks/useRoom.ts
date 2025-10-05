@@ -45,6 +45,7 @@ export function useRoom({ roomId, userId, username }: UseRoomOptions) {
     };
 
     const handleChatMessage = (message: Message) => {
+      console.log("[useRoom] Received chat message:", message);
       setMessages((prev) => [...prev, message]);
     };
 

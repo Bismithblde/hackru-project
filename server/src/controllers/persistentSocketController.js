@@ -25,10 +25,12 @@ function createPersistentSocketController(io, roomService) {
       if (!ok) return socket.emit("error", { message: "invalid join payload" });
 
       const { roomId, userId, username } = payload;
+      console.log(`[Socket] User ${username} (socket: ${socket.id}) joining room ${roomId}`);
 
       try {
         // Join Socket.io room
         socket.join(roomId);
+        console.log(`[Socket] Socket ${socket.id} joined Socket.io room ${roomId}`);
 
         // Add to in-memory room service (for presence)
         roomService.addUser(roomId, { socketId: socket.id, userId, username });
@@ -143,10 +145,16 @@ function createPersistentSocketController(io, roomService) {
      * Chat message event - Enhanced with Redis persistence
      */
     socket.on("chat:message", async (payload = {}) => {
+      console.log("[Socket] Received chat:message event:", payload);
+      
       const ok = requireFields(payload, ["roomId", "userId", "message"]);
-      if (!ok) return;
+      if (!ok) {
+        console.error("[Socket] Invalid chat payload - missing required fields");
+        return;
+      }
 
       const { roomId, userId, username, message, ts } = payload;
+      console.log(`[Socket] Processing message from ${username} (${userId}) in room ${roomId}`);
 
       // Prepare message object
       const messageObj = {
@@ -166,6 +174,7 @@ function createPersistentSocketController(io, roomService) {
         ts: messageObj.timestamp,
       };
 
+      console.log(`[Socket] Broadcasting message to room ${roomId}:`, out);
       io.to(roomId).emit("chat:message", out);
 
       // Try to save to Redis for persistence (non-blocking)
