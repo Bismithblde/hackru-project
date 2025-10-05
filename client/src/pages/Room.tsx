@@ -12,6 +12,7 @@ import AudioControls from "../components/AudioControls";
 import Leaderboard from "../components/Leaderboard";
 import Whiteboard from "../components/Whiteboard";
 import Quiz from "../components/Quiz";
+import PomodoroTimer from "../components/PomodoroTimer";
 
 const Room: React.FC = () => {
   const { code } = useParams();
@@ -363,6 +364,13 @@ const Room: React.FC = () => {
 
             {/* Leaderboard & Actions */}
             <div className="space-y-6">
+              {/* Pomodoro Timer */}
+              <PomodoroTimer
+                roomId={roomId}
+                userId={userIdRef.current}
+                isCreator={roomData?.createdBy === username}
+              />
+
               <div className="bg-white rounded-lg border border-slate-200 p-6">
                 <h3 className="text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2">
                   <span>🏆</span> Leaderboard
