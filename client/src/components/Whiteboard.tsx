@@ -78,7 +78,7 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ socket, roomId }) => {
     };
   }, [socket, excalidrawAPI]);
 
-  // Send whiteboard changes to other users
+  // Send whiteboard changes to other users with throttling for real-time updates
   const handleChange = useCallback(
     (elements: readonly any[]) => {
       if (socket && isCollaborating) {
@@ -128,6 +128,17 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ socket, roomId }) => {
           <Excalidraw
             excalidrawAPI={(api) => setExcalidrawAPI(api)}
             onChange={(elements) => handleChange(elements)}
+            onPointerUpdate={(payload) => {
+              // Send real-time pointer updates for cursor tracking
+              if (socket && isCollaborating && payload.button === "down") {
+                socket.emit("whiteboard-pointer", {
+                  roomId,
+                  x: payload.pointer.x,
+                  y: payload.pointer.y,
+                });
+              }
+            }}
+            isCollaborating={isCollaborating}
             initialData={{
               appState: {
                 viewBackgroundColor: "#ffffff",

@@ -320,7 +320,7 @@ const Room: React.FC = () => {
                     {getSocket() && !isWhiteboardExpanded && (
                       <button
                         onClick={() => setIsWhiteboardExpanded(true)}
-                        className="absolute top-4 right-4 z-10 px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-lg flex items-center gap-2"
+                        className="absolute top-4 left-4 z-10 px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-lg flex items-center gap-2"
                         title="Expand whiteboard"
                       >
                         <span>⛶</span> Expand
@@ -353,7 +353,7 @@ const Room: React.FC = () => {
                   {/* Close button */}
                   <button
                     onClick={() => setIsWhiteboardExpanded(false)}
-                    className="absolute top-4 right-4 z-10 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-lg flex items-center gap-2"
+                    className="absolute top-4 left-4 z-10 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-lg flex items-center gap-2"
                     title="Close expanded view"
                   >
                     <span>✕</span> Close
@@ -394,7 +394,7 @@ const Room: React.FC = () => {
         {/* Hide/Show Meeting Button */}
         <button
           onClick={() => setMeetingHidden((v) => !v)}
-          className="fixed top-6 right-6 z-50 px-4 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition-colors"
+          className="fixed top-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition-colors"
         >
           {meetingHidden ? "Show Meeting" : "Hide Meeting"}
         </button>
