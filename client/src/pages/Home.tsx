@@ -61,45 +61,177 @@ const Home: React.FC = () => {
                 ease: "easeInOut",
               }}
             >
-              <motion.img
-                src={bunnyLogo}
-                alt="StudyBunny Logo"
-                className="w-96 h-96 md:w-[500px] md:h-[500px] lg:w-[600px] lg:h-[600px] object-contain"
-                whileHover={{ scale: 1.1, rotate: 10 }}
-                transition={{ type: "spring", stiffness: 400, damping: 10 }}
-              />
+              {/* <motion.img
+  src={bunnyLogo}
+  alt="StudyBunny Logo"
+  className="w-96 h-96 md:w-[500px] md:h-[500px] lg:w-[600px] lg:h-[600px] object-contain"
+  whileHover={{ scale: 0.9 }}
+  transition={{ type: "spring", stiffness: 400, damping: 10 }}
+/> */}
+
+
+
+<motion.div
+  className="relative"
+  animate={{ y: [0, -15, 0] }}
+  transition={{
+    duration: 2,
+    repeat: Infinity,
+    ease: "easeInOut",
+  }}
+>
+  {/* Dots Animation */}
+  <div className="absolute inset-0 z-0" style={{ pointerEvents: 'none' }}>
+    {/* Red Dots - Most */}
+    {[...Array(30)].map((_, i) => (
+      <motion.div
+        key={`red-${i}`}
+        className="absolute w-3 h-3 bg-red-600 rounded-full"
+        style={{
+          left: '50%',
+          top: '50%',
+          transform: 'translate(-50%, -50%)',
+        }}
+        animate={{
+          x: [
+            0,
+            (Math.random() - 0.5) * 400,
+            (Math.random() - 0.5) * 800,
+          ],
+          y: [
+            0,
+            (Math.random() - 0.5) * 400,
+            (Math.random() - 0.5) * 800,
+          ],
+          scale: [0, 1.5, 0],
+          opacity: [0, 1, 0],
+        }}
+        transition={{
+          duration: 2 + Math.random() * 2,
+          repeat: Infinity,
+          delay: Math.random() * 1,
+          ease: "easeOut",
+        }}
+      />
+    ))}
+    
+    {/* Blue Dots - Medium */}
+    {[...Array(20)].map((_, i) => (
+      <motion.div
+        key={`blue-${i}`}
+        className="absolute w-3 h-3 bg-blue-600 rounded-full"
+        style={{
+          left: '50%',
+          top: '50%',
+          transform: 'translate(-50%, -50%)',
+        }}
+        animate={{
+          x: [
+            0,
+            (Math.random() - 0.5) * 400,
+            (Math.random() - 0.5) * 800,
+          ],
+          y: [
+            0,
+            (Math.random() - 0.5) * 400,
+            (Math.random() - 0.5) * 800,
+          ],
+          scale: [0, 1.5, 0],
+          opacity: [0, 1, 0],
+        }}
+        transition={{
+          duration: 2 + Math.random() * 2,
+          repeat: Infinity,
+          delay: Math.random() * 1,
+          ease: "easeOut",
+        }}
+      />
+    ))}
+    
+    {/* Yellow Dots - Least */}
+    {[...Array(10)].map((_, i) => (
+      <motion.div
+        key={`yellow-${i}`}
+        className="absolute w-3 h-3 bg-yellow-400 rounded-full"
+        style={{
+          left: '50%',
+          top: '50%',
+          transform: 'translate(-50%, -50%)',
+        }}
+        animate={{
+          x: [
+            0,
+            (Math.random() - 0.5) * 400,
+            (Math.random() - 0.5) * 800,
+          ],
+          y: [
+            0,
+            (Math.random() - 0.5) * 400,
+            (Math.random() - 0.5) * 800,
+          ],
+          scale: [0, 1.5, 0],
+          opacity: [0, 1, 0],
+        }}
+        transition={{
+          duration: 2 + Math.random() * 2,
+          repeat: Infinity,
+          delay: Math.random() * 1,
+          ease: "easeOut",
+        }}
+      />
+    ))}
+  </div>
+
+  <motion.img
+    src={bunnyLogo}
+    alt="StudyBunny Logo"
+    className="w-96 h-96 md:w-[500px] md:h-[500px] lg:w-[600px] lg:h-[600px] object-contain relative z-10"
+    whileHover={{ scale: 0.9 }}
+    transition={{ type: "spring", stiffness: 400, damping: 10 }}
+  />
+</motion.div>
+
+
+
+
+
+
+
+
+
+
             </motion.div>
           </motion.div>
 
           {/* Hero Text with stagger animation */}
           <motion.h1
-            className="text-7xl md:text-8xl font-bold text-slate-900 mb-6 tracking-tight"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
-          >
-            Study<span className="text-indigo-600">Bunny</span>
-          </motion.h1>
+          className="text-7xl md:text-8xl font-bold text-slate-900 mb-6 tracking-tight"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.6 }}
+        >
+          Study<span style={{ color: '#c41610ff' }}>Bunny</span>
+        </motion.h1>
 
-          <motion.p
-            className="text-xl md:text-2xl text-slate-600 max-w-3xl mx-auto mb-12 leading-relaxed"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.6 }}
-          >
-            Collaborate with friends, share knowledge, and study together in
-            real-time with
-            <span className="text-indigo-600 font-semibold">
-              {" "}
-              voice chat
-            </span>{" "}
-            and
-            <span className="text-indigo-600 font-semibold">
-              {" "}
-              interactive features
-            </span>
-            .
-          </motion.p>
+<motion.p
+  className="text-xl md:text-2xl text-slate-600 max-w-3xl mx-auto mb-12 leading-relaxed"
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ delay: 0.5, duration: 0.6 }}
+>
+  Collaborate with friends, share knowledge, and study together in
+  real-time with
+  <span style={{ color: '#da8f02ff', fontWeight: '600' }}>
+    {" "}
+    voice chat
+  </span>{" "}
+  and
+  <span style={{ color: '#068bb0ff', fontWeight: '600' }}>
+    {" "}
+    interactive features
+  </span>
+  .
+</motion.p>
 
           {/* CTA Buttons with animation */}
           <motion.div
@@ -111,25 +243,26 @@ const Home: React.FC = () => {
           >
             <Link to="/rooms">
               <motion.button
-                className="px-8 py-4 bg-indigo-600 text-white rounded-xl font-semibold shadow-lg text-lg"
-                whileHover={{
-                  scale: 1.05,
-                  y: -2,
-                  boxShadow:
-                    "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
-                }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <span className="flex items-center gap-2">
-                  Get Started Free
-                  <motion.span
-                    animate={{ x: [0, 5, 0] }}
-                    transition={{ duration: 1.5, repeat: Infinity }}
-                  >
-                    →
-                  </motion.span>
-                </span>
-              </motion.button>
+  className="px-8 py-4 text-white rounded-xl font-semibold shadow-lg text-lg"
+  style={{ backgroundColor: '#ae1207ff' }}
+  whileHover={{
+    scale: 1.05,
+    y: -2,
+    boxShadow:
+      "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
+  }}
+  whileTap={{ scale: 0.95 }}
+>
+  <span className="flex items-center gap-2">
+    Get Started Free
+    <motion.span
+      animate={{ x: [0, 5, 0] }}
+      transition={{ duration: 1.5, repeat: Infinity }}
+    >
+      →
+    </motion.span>
+  </span>
+</motion.button>
             </Link>
 
             <motion.button
@@ -174,43 +307,48 @@ const FeatureHeader: React.FC = () => {
 
   return (
     <motion.div
-      ref={ref}
-      className="text-center mb-16"
-      initial={{ opacity: 0, y: 50 }}
-      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
-      transition={{ duration: 0.6 }}
-    >
-      <h2 className="text-5xl md:text-6xl font-bold text-slate-900 mb-4">
-        Everything you need to{" "}
-        <span className="text-indigo-600">study smarter</span>
-      </h2>
-      <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-        Built for students who want to collaborate, compete, and succeed
-        together
-      </p>
-    </motion.div>
+  ref={ref}
+  className="text-center mb-16"
+  initial={{ opacity: 0, y: 50 }}
+  animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+  transition={{ duration: 0.6 }}
+>
+  <h2 className="text-5xl md:text-6xl font-bold text-slate-900 mb-4">
+    Everything you need to{" "}
+    <span style={{ color: '#ecbe08ff' }}>study smarter</span>
+  </h2>
+  <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+    Built for students who want to collaborate, compete, and succeed
+    together
+  </p>
+</motion.div>
   );
 };
+
+
+import microphone from "../assets/microphone.png";
+import comment from "../assets/comment.png";
+import trophy from "../assets/trophy.png";
 
 // Feature Cards Component
 const FeatureCards: React.FC = () => {
   const features = [
     {
-      icon: "🎤",
+      icon: microphone,
       title: "Crystal Clear Voice Chat",
       description:
         "Connect with your study group using high-quality audio powered by Daily.co. No lag, no interruptions.",
       color: "indigo",
     },
     {
-      icon: "💬",
+      icon: comment,
       title: "Real-time Messaging",
       description:
         "Share ideas, resources, and questions instantly with messenger-style chat that keeps conversations flowing.",
       color: "purple",
     },
     {
-      icon: "🏆",
+      icon: trophy,
       title: "Competitive Leaderboard",
       description:
         "Stay motivated by tracking progress and competing with friends. Turn studying into a fun challenge.",
@@ -254,7 +392,11 @@ const FeatureCard: React.FC<{ feature: any; index: number }> = ({
         whileHover={{ scale: 1.1, rotate: 10 }}
         transition={{ type: "spring", stiffness: 300 }}
       >
-        {feature.icon}
+        <img
+          src={feature.icon}
+          alt={feature.title}
+          className="w-16 h-16 mx-auto"
+        />
       </motion.div>
       <h3 className="text-2xl font-bold text-slate-900 mb-3">
         {feature.title}
@@ -272,19 +414,20 @@ const CTASection: React.FC = () => {
   return (
     <section className="py-24 px-6 bg-slate-50 relative overflow-hidden">
       <div className="absolute inset-0">
-        <motion.div
-          className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20"
-          animate={{
-            x: [0, 50, 0],
-            y: [0, 30, 0],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-        <motion.div
+<motion.div
+  className="absolute top-0 left-1/4 w-96 h-96 rounded-full mix-blend-multiply filter blur-3xl opacity-20"
+  style={{ backgroundColor: '#cdf4c6ff' }}
+  animate={{
+    x: [0, 50, 0],
+    y: [0, 30, 0],
+  }}
+  transition={{
+    duration: 8,
+    repeat: Infinity,
+    ease: "easeInOut",
+  }}
+/>
+<motion.div
           className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20"
           animate={{
             x: [0, -50, 0],
@@ -314,23 +457,24 @@ const CTASection: React.FC = () => {
         </p>
         <Link to="/rooms">
           <motion.button
-            className="inline-flex items-center gap-2 px-10 py-5 bg-indigo-600 text-white rounded-xl font-semibold shadow-xl text-xl"
-            whileHover={{
-              scale: 1.05,
-              y: -3,
-              boxShadow: "0 25px 50px -12px rgb(0 0 0 / 0.25)",
-            }}
-            whileTap={{ scale: 0.95 }}
-          >
-            Start Studying Now
-            <motion.span
-              className="text-2xl"
-              animate={{ x: [0, 5, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-            >
-              →
-            </motion.span>
-          </motion.button>
+  className="inline-flex items-center gap-2 px-10 py-5 text-white rounded-xl font-semibold shadow-xl text-xl"
+  style={{ backgroundColor: '#c41610ff' }}
+  whileHover={{
+    scale: 1.05,
+    y: -3,
+    boxShadow: "0 25px 50px -12px rgb(0 0 0 / 0.25)",
+  }}
+  whileTap={{ scale: 0.95 }}
+>
+  Start Studying Now
+  <motion.span
+    className="text-2xl"
+    animate={{ x: [0, 5, 0] }}
+    transition={{ duration: 1.5, repeat: Infinity }}
+  >
+    →
+  </motion.span>
+</motion.button>
         </Link>
       </motion.div>
     </section>
