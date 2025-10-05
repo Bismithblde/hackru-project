@@ -165,42 +165,45 @@ const Room: React.FC = () => {
           </Link>
         </div>
 
-        {!username ? (
-          <div className="bg-white rounded-lg border border-slate-200 p-8 max-w-md mx-auto">
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-indigo-600 rounded-lg mx-auto mb-4 flex items-center justify-center">
-                <span className="text-3xl">👤</span>
+        <>
+          {/* Username prompt overlay if not set */}
+          {!username && (
+            <div className="absolute inset-0 z-40 flex items-center justify-center bg-white/80">
+              <div className="bg-white rounded-lg border border-slate-200 p-8 max-w-md mx-auto shadow-lg">
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 bg-indigo-600 rounded-lg mx-auto mb-4 flex items-center justify-center">
+                    <span className="text-3xl">👤</span>
+                  </div>
+                  <h3 className="text-2xl font-bold text-slate-900">
+                    Join the Study Room
+                  </h3>
+                  <p className="text-slate-600 mt-2">
+                    Enter your name to get started
+                  </p>
+                </div>
+                <label className="block">
+                  <input
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        const val = (e.target as HTMLInputElement).value.trim();
+                        if (val) setUsername(val);
+                      }
+                    }}
+                    placeholder="Enter your display name..."
+                    autoFocus
+                  />
+                </label>
               </div>
-              <h3 className="text-2xl font-bold text-slate-900">
-                Join the Study Room
-              </h3>
-              <p className="text-slate-600 mt-2">
-                Enter your name to get started
-              </p>
             </div>
-            <label className="block">
-              <input
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    const val = (e.target as HTMLInputElement).value.trim();
-                    if (val) setUsername(val);
-                  }
-                }}
-                placeholder="Enter your display name..."
-                autoFocus
-              />
-            </label>
-          </div>
-        ) : (
-          <>
+          )}
             {/* User Info & Voice Controls */}
             <div className="bg-white rounded-lg border border-slate-200 p-6">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-indigo-600 rounded-lg flex items-center justify-center">
                     <span className="text-white text-xl font-bold">
-                      {username[0].toUpperCase()}
+                      {username ? username[0].toUpperCase() : "?"}
                     </span>
                   </div>
                   <div>
@@ -240,30 +243,34 @@ const Room: React.FC = () => {
             </div>
 
             {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative">
               {/* Chat & Whiteboard Section with Tabs */}
               <div className="lg:col-span-2 bg-white rounded-lg border border-slate-200 overflow-hidden">
                 {/* Tab Headers */}
                 <div className="flex border-b border-slate-200">
                   <button
-                    onClick={() => setActiveTab("chat")}
+                    onClick={() => username && username.trim() && setActiveTab("chat")}
                     className={`flex-1 px-6 py-4 font-semibold text-base transition-all ${
                       activeTab === "chat"
                         ? "bg-white text-indigo-600 border-b-2 border-indigo-600"
                         : "bg-slate-50 text-slate-600 hover:bg-slate-100"
-                    }`}
+                    } ${!username || !username.trim() ? "opacity-50 cursor-not-allowed" : ""}`}
+                    disabled={!username || !username.trim()}
+                    title={!username || !username.trim() ? "Enter your name to use chat" : ""}
                   >
                     <span className="flex items-center justify-center gap-2">
                       <span>💬</span> Chat
                     </span>
                   </button>
                   <button
-                    onClick={() => setActiveTab("whiteboard")}
+                    onClick={() => username && username.trim() && setActiveTab("whiteboard")}
                     className={`flex-1 px-6 py-4 font-semibold text-base transition-all ${
                       activeTab === "whiteboard"
                         ? "bg-white text-indigo-600 border-b-2 border-indigo-600"
                         : "bg-slate-50 text-slate-600 hover:bg-slate-100"
-                    }`}
+                    } ${!username || !username.trim() ? "opacity-50 cursor-not-allowed" : ""}`}
+                    disabled={!username || !username.trim()}
+                    title={!username || !username.trim() ? "Enter your name to use whiteboard" : ""}
                   >
                     <span className="flex items-center justify-center gap-2">
                       <span>🎨</span> Whiteboard
@@ -315,8 +322,8 @@ const Room: React.FC = () => {
                 </div>
               </div>
             </div>
-          </>
-        )}
+          {/* End main content */}
+        </>
 
         {/* Hide/Show Meeting Button */}
         <button
