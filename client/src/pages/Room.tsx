@@ -11,6 +11,7 @@ import Chat from "../components/Chat";
 import AudioControls from "../components/AudioControls";
 import Leaderboard from "../components/Leaderboard";
 import Whiteboard from "../components/Whiteboard";
+import Quiz from "../components/Quiz";
 
 const Room: React.FC = () => {
   const { code } = useParams();
@@ -112,13 +113,6 @@ const Room: React.FC = () => {
         ts: Date.now(),
       });
     }
-  };
-
-  const handleSubmitRandomAnswer = () => {
-    emit(SOCKET_EVENTS.GAME_ANSWER, {
-      userId: userIdRef.current,
-      answer: Math.floor(Math.random() * 100).toString(),
-    });
   };
 
   return (
@@ -374,17 +368,19 @@ const Room: React.FC = () => {
                 <Leaderboard entries={leaderboard} />
               </div>
 
-              <div className="bg-slate-900 rounded-lg p-6 text-white">
-                <h3 className="text-lg font-semibold mb-2">Quick Actions</h3>
-                <p className="text-sm text-slate-400 mb-4">
-                  Test game features
+              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg border border-slate-200 p-6">
+                <h3 className="text-lg font-semibold text-slate-900 mb-1 flex items-center gap-2">
+                  <span>🎯</span> Study Quiz
+                </h3>
+                <p className="text-sm text-slate-600 mb-4">
+                  Test your knowledge
                 </p>
-                <button
-                  onClick={handleSubmitRandomAnswer}
-                  className="w-full px-4 py-3 bg-white text-slate-900 rounded-lg hover:bg-slate-100 transition-colors font-medium"
-                >
-                  Submit Random Answer
-                </button>
+                <Quiz
+                  onSubmitAnswer={(questionId, answer) => {
+                    // TODO: Connect to backend/socket events
+                    console.log("Quiz answer:", questionId, answer);
+                  }}
+                />
               </div>
             </div>
           </div>

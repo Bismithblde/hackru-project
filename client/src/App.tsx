@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import Home from "./pages/Home";
 import Rooms from "./pages/Rooms";
 import Room from "./pages/Room";
+import SavedWhiteboard from "./pages/SavedWhiteboard";
 import bunnyLogo from "./assets/bunny.png";
 import { RoomProvider } from "./contexts/RoomContext";
 
@@ -52,6 +53,7 @@ const App: React.FC = () => {
               <Route path="/" element={<Home />} />
               <Route path="/rooms" element={<Rooms />} />
               <Route path="/room/:code" element={<Room />} />
+              <Route path="/whiteboard/:id" element={<SavedWhiteboard />} />
             </Routes>
           </main>
         </div>
