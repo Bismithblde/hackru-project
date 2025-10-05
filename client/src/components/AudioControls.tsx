@@ -66,10 +66,18 @@ const AudioControls: React.FC<AudioControlsProps> = ({
         <span>{muted ? "🔇" : "🎤"}</span>
         {muted ? "Unmute" : "Mute"}
       </button>
-      <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${
-        muted ? "bg-red-50 text-red-700 border border-red-200" : "bg-green-50 text-green-700 border border-green-200"
-      }`}>
-        <div className={`w-2 h-2 rounded-full ${muted ? "bg-red-500" : "bg-green-500 animate-pulse"}`}></div>
+      <div
+        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${
+          muted
+            ? "bg-red-50 text-red-700 border border-red-200"
+            : "bg-green-50 text-green-700 border border-green-200"
+        }`}
+      >
+        <div
+          className={`w-2 h-2 rounded-full ${
+            muted ? "bg-red-500" : "bg-green-500 animate-pulse"
+          }`}
+        ></div>
         <span className="text-xs font-medium">
           {muted ? "Muted" : "Active"}
         </span>

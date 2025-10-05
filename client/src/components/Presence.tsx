@@ -1,13 +1,14 @@
 import React from "react";
-
-type User = { userId: string; username: string; socketId: string };
-
+import type { User } from "../types";
 import { emit } from "../lib/socket";
+import { SOCKET_EVENTS } from "../constants";
 
-const Presence: React.FC<{ users: User[]; meSocketId?: string }> = ({
-  users,
-  meSocketId,
-}) => {
+interface PresenceProps {
+  users: User[];
+  meSocketId?: string;
+}
+
+const Presence: React.FC<PresenceProps> = ({ users, meSocketId }) => {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
@@ -19,7 +20,7 @@ const Presence: React.FC<{ users: User[]; meSocketId?: string }> = ({
           </span>
         </h3>
       </div>
-      
+
       {users.length === 0 ? (
         <div className="text-center py-8 text-slate-400">
           <div className="text-3xl mb-2">👻</div>
@@ -28,7 +29,10 @@ const Presence: React.FC<{ users: User[]; meSocketId?: string }> = ({
       ) : (
         <ul className="space-y-3">
           {users.map((u) => (
-            <li key={u.socketId} className="flex items-center justify-between bg-slate-50 rounded-lg p-3 border border-slate-200 hover:bg-slate-100 transition-colors">
+            <li
+              key={u.socketId}
+              className="flex items-center justify-between bg-slate-50 rounded-lg p-3 border border-slate-200 hover:bg-slate-100 transition-colors"
+            >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold">
                   {u.username?.[0]?.toUpperCase() ?? "?"}
@@ -60,9 +64,10 @@ const Presence: React.FC<{ users: User[]; meSocketId?: string }> = ({
                       const pts = Number(input);
                       if (!pts || pts < 1 || pts > 10)
                         return alert("Points must be 1-10");
-                      emit("points:award", {
+                      emit(SOCKET_EVENTS.POINTS_AWARD, {
                         roomId: (window as any).__currentRoomId || "room-1",
-                        fromUserId: (window as any).__currentUserId || "unknown",
+                        fromUserId:
+                          (window as any).__currentUserId || "unknown",
                         fromUsername:
                           (window as any).__currentUsername || "unknown",
                         toUserId: u.userId,

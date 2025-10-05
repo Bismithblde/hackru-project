@@ -6,7 +6,12 @@ import Room from "./pages/Room";
 
 const App: React.FC = () => {
   return (
-    <BrowserRouter>
+    <BrowserRouter
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+      }}
+    >
       <div className="min-h-screen bg-slate-50">
         <header className="bg-white border-b sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -14,19 +19,17 @@ const App: React.FC = () => {
               <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
                 <span className="text-white text-xl font-bold">📚</span>
               </div>
-              <h1 className="text-2xl font-bold text-slate-900">
-                StudyBunny
-              </h1>
+              <h1 className="text-2xl font-bold text-slate-900">StudyBunny</h1>
             </Link>
             <nav className="flex gap-6">
-              <Link 
-                to="/" 
+              <Link
+                to="/"
                 className="text-slate-600 hover:text-slate-900 font-medium transition-colors"
               >
                 Home
               </Link>
-              <Link 
-                to="/rooms" 
+              <Link
+                to="/rooms"
                 className="text-slate-600 hover:text-slate-900 font-medium transition-colors"
               >
                 Rooms

@@ -1,12 +1,14 @@
 import React, { useRef, useEffect } from "react";
+import type { Message } from "../types";
+import { formatTime } from "../utils";
 
-type Message = { userId: string; username?: string; message: string; ts: number };
-
-const Chat: React.FC<{
+interface ChatProps {
   messages: Message[];
   currentUserId: string;
   onSend: (msg: string) => void;
-}> = ({ messages, currentUserId, onSend }) => {
+}
+
+const Chat: React.FC<ChatProps> = ({ messages, currentUserId, onSend }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
 
@@ -32,14 +34,20 @@ const Chat: React.FC<{
             return (
               <div
                 key={idx}
-                className={`flex ${isMe ? "justify-end" : "justify-start"} mb-2`}
+                className={`flex ${
+                  isMe ? "justify-end" : "justify-start"
+                } mb-2`}
               >
-                <div className={`flex flex-col ${isMe ? "items-end" : "items-start"} max-w-[70%]`}>
+                <div
+                  className={`flex flex-col ${
+                    isMe ? "items-end" : "items-start"
+                  } max-w-[70%]`}
+                >
                   {/* Username */}
                   <div className="text-xs text-slate-500 mb-1 px-3">
                     {m.username || "Anonymous"}
                   </div>
-                  
+
                   {/* Message Bubble */}
                   <div
                     className={`rounded-lg px-4 py-2 ${
@@ -50,13 +58,10 @@ const Chat: React.FC<{
                   >
                     <div className="text-sm break-words">{m.message}</div>
                   </div>
-                  
+
                   {/* Timestamp */}
                   <div className="text-xs text-slate-400 mt-1 px-3">
-                    {new Date(m.ts).toLocaleTimeString([], { 
-                      hour: '2-digit', 
-                      minute: '2-digit' 
-                    })}
+                    {formatTime(m.ts)}
                   </div>
                 </div>
               </div>

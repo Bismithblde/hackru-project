@@ -30,15 +30,15 @@ function createAudioElementForParticipant(
   const audio = document.createElement("audio");
   audio.autoplay = true;
   audio.srcObject = new MediaStream([track]);
-  
+
   // Add to DOM (hidden)
   audio.style.display = "none";
   document.body.appendChild(audio);
-  
+
   audioElements.set(sessionId, audio);
-  
+
   console.log("[Daily] Created audio element for participant:", sessionId);
-  
+
   // Start playing
   audio.play().catch((err) => {
     console.error("[Daily] Failed to play audio:", err);
@@ -73,20 +73,23 @@ export async function joinDailyRoom(
       // Use createFrame if container provided (handles audio automatically)
       // Otherwise use createCallObject (requires manual audio handling)
       if (iframeContainer) {
-        console.log("[Daily] Creating iframe in container for automatic audio playback");
+        console.log(
+          "[Daily] Creating iframe in container for automatic audio playback"
+        );
         callObject = DailyIframe.createFrame(iframeContainer, {
           showLeaveButton: true,
           showFullscreenButton: false,
           iframeStyle: {
-            position: 'fixed',
-            bottom: '24px',
-            right: '24px',
-            width: '420px',
-            height: '320px',
-            border: 'none',
-            borderRadius: '16px',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-            zIndex: '9999',
+            position: "fixed",
+            bottom: "24px",
+            right: "24px",
+            width: "420px",
+            height: "320px",
+            border: "none",
+            borderRadius: "16px",
+            boxShadow:
+              "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+            zIndex: "9999",
           },
         });
       } else {
@@ -105,7 +108,7 @@ export async function joinDailyRoom(
             "[Daily] Participant joined:",
             event.participant.user_name
           );
-          
+
           // Handle audio for new participant
           if (!iframeContainer && event.participant.tracks?.audio?.track) {
             createAudioElementForParticipant(
@@ -113,19 +116,19 @@ export async function joinDailyRoom(
               event.participant.tracks.audio.track
             );
           }
-          
+
           if (callbacks?.onParticipantJoined) {
             callbacks.onParticipantJoined(event.participant);
           }
         })
         .on("participant-left", (event) => {
           console.log("[Daily] Participant left:", event.participant.user_name);
-          
+
           // Clean up audio element
           if (!iframeContainer) {
             removeAudioElementForParticipant(event.participant.session_id);
           }
-          
+
           if (callbacks?.onParticipantLeft) {
             callbacks.onParticipantLeft(event.participant);
           }
@@ -137,7 +140,7 @@ export async function joinDailyRoom(
             "Audio track:",
             event.participant.tracks?.audio?.state
           );
-          
+
           // Handle audio track updates
           if (!iframeContainer && event.participant.tracks?.audio?.track) {
             createAudioElementForParticipant(
@@ -145,7 +148,7 @@ export async function joinDailyRoom(
               event.participant.tracks.audio.track
             );
           }
-          
+
           if (callbacks?.onParticipantUpdated) {
             callbacks.onParticipantUpdated(event.participant);
           }
@@ -156,9 +159,13 @@ export async function joinDailyRoom(
             event.participant?.user_name,
             event.track.kind
           );
-          
+
           // Handle audio tracks when they start
-          if (!iframeContainer && event.track.kind === "audio" && event.participant) {
+          if (
+            !iframeContainer &&
+            event.track.kind === "audio" &&
+            event.participant
+          ) {
             createAudioElementForParticipant(
               event.participant.session_id,
               event.track
@@ -182,18 +189,21 @@ export async function joinDailyRoom(
     });
 
     console.log("[Daily] Successfully joined room!");
-    
+
     // Handle existing participants' audio tracks
     const participants = callObject.participants();
     console.log("[Daily] Participants:", participants);
-    
+
     if (!iframeContainer) {
       // Create audio elements for all existing participants
       Object.entries(participants).forEach(([sessionId, participant]) => {
         if (participant.local) return; // Skip local participant
-        
+
         if (participant.tracks?.audio?.track) {
-          console.log("[Daily] Setting up audio for existing participant:", participant.user_name);
+          console.log(
+            "[Daily] Setting up audio for existing participant:",
+            participant.user_name
+          );
           createAudioElementForParticipant(
             sessionId,
             participant.tracks.audio.track
@@ -217,14 +227,14 @@ export async function leaveDailyRoom(): Promise<void> {
     await callObject.leave();
     await callObject.destroy();
     callObject = null;
-    
+
     // Clean up all audio elements
     audioElements.forEach((audio) => {
       audio.pause();
       audio.remove();
     });
     audioElements.clear();
-    
+
     console.log("[Daily] Left room and cleaned up");
   }
 }

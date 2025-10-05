@@ -12,7 +12,9 @@
   "dependencies": {
     "@daily-co/daily-js": "^0.84.0",
     "@daily-co/daily-react": "^0.23.2",
+    "@excalidraw/excalidraw": "^0.18.0",
     "@tailwindcss/vite": "^4.1.14",
+    "framer-motion": "^12.23.22",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^6.20.0",
