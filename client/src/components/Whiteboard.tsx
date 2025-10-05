@@ -57,7 +57,6 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ socket, roomId }) => {
   const [excalidrawAPI, setExcalidrawAPI] = useState<any>(null);
   const [isCollaborating, setIsCollaborating] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
-  const [savedLink, setSavedLink] = useState<string | null>(null);
 
   // Handle incoming whiteboard updates from other users
   useEffect(() => {
@@ -119,7 +118,6 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ socket, roomId }) => {
 
       if (data.success) {
         setSaveStatus('saved');
-        setSavedLink(data.shareableLink);
         
         // Copy to clipboard
         if (navigator.clipboard) {
