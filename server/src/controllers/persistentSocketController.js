@@ -148,30 +148,36 @@ function createPersistentSocketController(io, roomService) {
 
       const { roomId, userId, username, message, ts } = payload;
 
-      try {
-        // Save message to Redis
-        const savedMessage = await persistentRoomService.saveMessage(roomId, {
-          userId,
-          username: username || "Anonymous",
-          message,
-          timestamp: ts || Date.now(),
-        });
+      // Prepare message object
+      const messageObj = {
+        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        userId,
+        username: username || "Anonymous",
+        message,
+        timestamp: ts || Date.now(),
+      };
 
-        // Broadcast to all users in room (including sender for confirmation)
-        const out = {
-          id: savedMessage.id,
-          userId: savedMessage.userId,
-          username: savedMessage.username,
-          message: savedMessage.message,
-          ts: savedMessage.timestamp,
-        };
+      // Always broadcast to all users in room first (real-time chat)
+      const out = {
+        id: messageObj.id,
+        userId: messageObj.userId,
+        username: messageObj.username,
+        message: messageObj.message,
+        ts: messageObj.timestamp,
+      };
 
-        io.to(roomId).emit("chat:message", out);
+      io.to(roomId).emit("chat:message", out);
 
-        console.log(`[Socket] Message saved and broadcast in room ${roomId}`);
-      } catch (error) {
-        console.error("[Socket] Error saving message:", error);
-        socket.emit("error", { message: "Failed to send message" });
+      // Try to save to Redis for persistence (non-blocking)
+      if (isRedisAvailable()) {
+        try {
+          await persistentRoomService.saveMessage(roomId, messageObj);
+          console.log(`[Socket] Message saved to Redis and broadcast in room ${roomId}`);
+        } catch (error) {
+          console.error("[Socket] Error saving message to Redis (message was still broadcast):", error.message);
+        }
+      } else {
+        console.log(`[Socket] Message broadcast in room ${roomId} (Redis unavailable, not persisted)`);
       }
     });
 
