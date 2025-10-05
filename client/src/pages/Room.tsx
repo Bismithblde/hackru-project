@@ -11,6 +11,7 @@ import Chat from "../components/Chat";
 import AudioControls from "../components/AudioControls";
 import Leaderboard from "../components/Leaderboard";
 import Whiteboard from "../components/Whiteboard";
+import Draggable from "react-draggable";
 
 const Room: React.FC = () => {
   const { code } = useParams();
@@ -315,8 +316,20 @@ const Room: React.FC = () => {
           </>
         )}
 
-        {/* Daily.co iframe container */}
-        <div ref={dailyContainerRef} id="daily-iframe-container"></div>
+        {/* Daily.co iframe container - now draggable */}
+        <Draggable defaultPosition={{ x: 100, y: 100 }} bounds="parent">
+          <div
+            ref={dailyContainerRef}
+            id="daily-iframe-container"
+            style={{
+              position: "fixed",
+              zIndex: 50,
+              bottom: 32,
+              right: 32,
+              minWidth: 320,
+            }}
+          />
+        </Draggable>
       </div>
     </div>
   );
