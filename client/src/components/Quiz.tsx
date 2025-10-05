@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { getSocket, on, off, emit } from "../lib/socket";
+import { SOCKET_EVENTS } from "../constants";
 
 interface QuizQuestion {
   id: string;
@@ -31,6 +32,7 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
   const [answered, setAnswered] = useState(false);
   const [userAnswers, setUserAnswers] = useState<Record<string, number>>({});
   const [showStartNotification, setShowStartNotification] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>("");
 
   // Quiz creation form state
   const [quizTitle, setQuizTitle] = useState("");
@@ -52,6 +54,7 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
       console.log("[Quiz] Quiz created:", data);
       setActiveQuiz(data.quiz);
       setShowCreateForm(false);
+      setErrorMessage("");
     };
 
     const handleQuizStarted = (data: any) => {
@@ -61,6 +64,7 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
       setScore(0);
       setShowResult(false);
       setUserAnswers({});
+      setErrorMessage("");
       
       // Show notification that quiz has started
       if (!isOwner) {
@@ -77,33 +81,48 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
 
     const handleQuizEnded = (data: any) => {
       console.log("[Quiz] Quiz ended:", data);
+      
+      // Show results if available
+      if (data.results && data.results.length > 0) {
+        console.log("[Quiz] Final results:", data.results);
+      }
+      
       setActiveQuiz(null);
       setShowResult(false);
+      setErrorMessage("");
     };
 
     const handleAnswerSubmitted = (data: any) => {
       console.log("[Quiz] Answer submitted:", data);
     };
 
-    on("quiz:created", handleQuizCreated);
-    on("quiz:started", handleQuizStarted);
-    on("quiz:ended", handleQuizEnded);
-    on("quiz:answerSubmitted", handleAnswerSubmitted);
+    const handleQuizError = (data: any) => {
+      console.error("[Quiz] Error:", data.message);
+      setErrorMessage(data.message || "An error occurred");
+      setTimeout(() => setErrorMessage(""), 5000);
+    };
+
+    on(SOCKET_EVENTS.QUIZ_CREATED, handleQuizCreated);
+    on(SOCKET_EVENTS.QUIZ_STARTED, handleQuizStarted);
+    on(SOCKET_EVENTS.QUIZ_ENDED, handleQuizEnded);
+    on(SOCKET_EVENTS.QUIZ_ANSWER_SUBMITTED, handleAnswerSubmitted);
+    on(SOCKET_EVENTS.QUIZ_ERROR, handleQuizError);
 
     // Request current quiz state
-    emit("quiz:getState", { roomId });
+    emit(SOCKET_EVENTS.QUIZ_GET_STATE, { roomId });
 
     return () => {
-      off("quiz:created", handleQuizCreated);
-      off("quiz:started", handleQuizStarted);
-      off("quiz:ended", handleQuizEnded);
-      off("quiz:answerSubmitted", handleAnswerSubmitted);
+      off(SOCKET_EVENTS.QUIZ_CREATED, handleQuizCreated);
+      off(SOCKET_EVENTS.QUIZ_STARTED, handleQuizStarted);
+      off(SOCKET_EVENTS.QUIZ_ENDED, handleQuizEnded);
+      off(SOCKET_EVENTS.QUIZ_ANSWER_SUBMITTED, handleAnswerSubmitted);
+      off(SOCKET_EVENTS.QUIZ_ERROR, handleQuizError);
     };
   }, [roomId]);
 
   const handleCreateQuiz = () => {
     if (!quizTitle.trim()) {
-      alert("Please enter a quiz title");
+      setErrorMessage("Please enter a quiz title");
       return;
     }
 
@@ -111,11 +130,11 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i];
       if (!q.question.trim()) {
-        alert(`Please enter question ${i + 1}`);
+        setErrorMessage(`Please enter question ${i + 1}`);
         return;
       }
       if (q.options.some((opt) => !opt.trim())) {
-        alert(`Please fill all options for question ${i + 1}`);
+        setErrorMessage(`Please fill all options for question ${i + 1}`);
         return;
       }
     }
@@ -127,17 +146,17 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
       createdBy: username,
     };
 
-    emit("quiz:create", { roomId, quiz });
+    emit(SOCKET_EVENTS.QUIZ_CREATE, { roomId, quiz });
   };
 
   const handleStartQuiz = () => {
     if (!activeQuiz) return;
-    emit("quiz:start", { roomId, quizId: activeQuiz.id });
+    emit(SOCKET_EVENTS.QUIZ_START, { roomId, quizId: activeQuiz.id });
   };
 
   const handleEndQuiz = () => {
     if (!activeQuiz) return;
-    emit("quiz:end", { roomId, quizId: activeQuiz.id });
+    emit(SOCKET_EVENTS.QUIZ_END, { roomId, quizId: activeQuiz.id });
   };
 
   const handleAddQuestion = () => {
@@ -204,7 +223,7 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
     }
 
     // Emit answer to server with correctness flag
-    emit("quiz:submitAnswer", {
+    emit(SOCKET_EVENTS.QUIZ_SUBMIT_ANSWER, {
       roomId,
       quizId: activeQuiz.id,
       questionId: currentQuestion.id,
@@ -268,11 +287,20 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
     </div>
   );
 
+  // Error message notification
+  const errorNotification = errorMessage && (
+    <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
+      <span className="text-xl">⚠️</span>
+      <p className="text-sm font-medium">{errorMessage}</p>
+    </div>
+  );
+
   // Owner view - quiz creation form
   if (isOwner && showCreateForm) {
     return (
       <>
         {quizStartNotification}
+        {errorNotification}
         <div className="space-y-4 max-h-[500px] overflow-y-auto">
         <div className="sticky top-0 bg-gradient-to-br from-indigo-50 to-purple-50 p-4 rounded-lg border border-indigo-200 z-10">
           <h4 className="font-semibold text-slate-900 mb-2">Create Quiz</h4>
@@ -376,6 +404,7 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
     return (
       <>
         {quizStartNotification}
+        {errorNotification}
         <div className="space-y-4">
         <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg p-6 border-2 border-indigo-200">
           <div className="text-center">
@@ -412,6 +441,7 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
     return (
       <>
         {quizStartNotification}
+        {errorNotification}
         <div className="text-center py-8 text-slate-500">
           <div className="text-5xl mb-3">📝</div>
           <p className="text-sm">Waiting for room owner to create a quiz...</p>
@@ -426,6 +456,7 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
     return (
       <>
         {quizStartNotification}
+        {errorNotification}
         <div className="space-y-4">
         <div className="text-center p-6 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg border-2 border-indigo-200">
           <div className="text-6xl mb-4">
@@ -460,6 +491,7 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
   return (
     <>
       {quizStartNotification}
+      {errorNotification}
       <div className="space-y-4">
       {/* Progress Bar */}
       <div className="space-y-2">
