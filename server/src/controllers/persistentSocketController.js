@@ -135,7 +135,7 @@ function createPersistentSocketController(io, roomService) {
                 entry.points
               );
             });
-            
+
             // Send updated leaderboard to all users
             const leaderboard = roomService.getLeaderboard(roomId);
             io.to(roomId).emit("points:update", { roomId, leaderboard });
@@ -326,12 +326,17 @@ function createPersistentSocketController(io, roomService) {
       // update leaderboard (in-memory)
       roomService.addPoints(roomId, toUserId, toUsername || "unknown", pts);
       const leaderboard = roomService.getLeaderboard(roomId);
-      
+
       // Persist to MongoDB
       const userEntry = leaderboard.find((e) => e.userId === toUserId);
       if (userEntry) {
         mongoRoomService
-          .updateLeaderboard(roomId, toUserId, userEntry.username, userEntry.points)
+          .updateLeaderboard(
+            roomId,
+            toUserId,
+            userEntry.username,
+            userEntry.points
+          )
           .catch((err) =>
             console.error("[Socket] Error persisting leaderboard:", err)
           );

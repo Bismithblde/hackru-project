@@ -16,7 +16,9 @@ const SoundToggle: React.FC = () => {
       title={enabled ? "Sound effects enabled" : "Sound effects disabled"}
     >
       <span className="text-lg">{enabled ? "🔊" : "🔇"}</span>
-      <span className="text-slate-700">{enabled ? "Sound On" : "Sound Off"}</span>
+      <span className="text-slate-700">
+        {enabled ? "Sound On" : "Sound Off"}
+      </span>
     </button>
   );
 };

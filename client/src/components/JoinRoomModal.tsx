@@ -111,17 +111,24 @@ export const JoinRoomModal = ({ isOpen, onClose }: JoinRoomModalProps) => {
             <button
               type="button"
               onClick={handleClose}
-              className="flex-1 px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors"
+              className="flex-1 px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               disabled={loading || code.length !== 6 || !username.trim()}
             >
-              {loading ? "Joining..." : "Join Room"}
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Joining...
+                </>
+              ) : (
+                "Join Room"
+              )}
             </button>
           </div>
         </form>

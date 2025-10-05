@@ -7,7 +7,7 @@ function createRoomService() {
 
   // Performance optimization: O(1) socket-to-room lookup
   const socketToRoom = new Map(); // socketId -> roomId
-  
+
   // Cleanup callbacks when room becomes empty
   const cleanupCallbacks = [];
 
@@ -15,13 +15,13 @@ function createRoomService() {
     if (!rooms.has(roomId)) rooms.set(roomId, new Map());
     return rooms.get(roomId);
   }
-  
+
   function onRoomEmpty(callback) {
     cleanupCallbacks.push(callback);
   }
-  
+
   function notifyRoomEmpty(roomId) {
-    cleanupCallbacks.forEach(cb => cb(roomId));
+    cleanupCallbacks.forEach((cb) => cb(roomId));
   }
 
   function addUser(roomId, user) {

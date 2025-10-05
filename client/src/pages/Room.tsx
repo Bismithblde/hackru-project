@@ -145,7 +145,9 @@ const Room: React.FC = () => {
       successWithSound("Joined voice chat!");
     } catch (err: any) {
       console.error("[Room] Failed to join Daily room:", err);
-      errorWithSound(`Failed to join voice chat: ${err.message || "Unknown error"}`);
+      errorWithSound(
+        `Failed to join voice chat: ${err.message || "Unknown error"}`
+      );
     }
   };
 

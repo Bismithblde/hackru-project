@@ -8,9 +8,6 @@ import {
   useInView,
 } from "framer-motion";
 import bunnyLogo from "../assets/bunny.png";
-import microphone from "../assets/microphone.png";
-import comment from "../assets/comment.png";
-import trophy from "../assets/trophy.png";
 
 const Home: React.FC = () => {
   const heroRef = useRef<HTMLDivElement>(null);
@@ -301,21 +298,21 @@ const FeatureHeader: React.FC = () => {
 const FeatureCards: React.FC = () => {
   const features = [
     {
-      icon: microphone,
+      icon: "🎤",
       title: "Crystal Clear Voice Chat",
       description:
         "Connect with your study group using high-quality audio powered by Daily.co. No lag, no interruptions.",
       color: "indigo",
     },
     {
-      icon: comment,
+      icon: "💬",
       title: "Real-time Messaging",
       description:
         "Share ideas, resources, and questions instantly with messenger-style chat that keeps conversations flowing.",
       color: "purple",
     },
     {
-      icon: trophy,
+      icon: "🏆",
       title: "Competitive Leaderboard",
       description:
         "Stay motivated by tracking progress and competing with friends. Turn studying into a fun challenge.",
@@ -359,11 +356,7 @@ const FeatureCard: React.FC<{ feature: any; index: number }> = ({
         whileHover={{ scale: 1.1, rotate: 10 }}
         transition={{ type: "spring", stiffness: 300 }}
       >
-        <img
-          src={feature.icon}
-          alt={feature.title}
-          className="w-16 h-16 mx-auto"
-        />
+        {feature.icon}
       </motion.div>
       <h3 className="text-2xl font-bold text-slate-900 mb-3">
         {feature.title}
