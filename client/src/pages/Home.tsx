@@ -62,16 +62,19 @@ const Home: React.FC = () => {
               }}
             >
               {/* Dots Animation */}
-              <div className="absolute inset-0 z-0" style={{ pointerEvents: 'none' }}>
+              <div
+                className="absolute inset-0 z-0"
+                style={{ pointerEvents: "none" }}
+              >
                 {/* Red Dots - Most */}
                 {[...Array(30)].map((_, i) => (
                   <motion.div
                     key={`red-${i}`}
                     className="absolute w-3 h-3 bg-red-600 rounded-full"
                     style={{
-                      left: '50%',
-                      top: '50%',
-                      transform: 'translate(-50%, -50%)',
+                      left: "50%",
+                      top: "50%",
+                      transform: "translate(-50%, -50%)",
                     }}
                     animate={{
                       x: [
@@ -95,16 +98,16 @@ const Home: React.FC = () => {
                     }}
                   />
                 ))}
-                
+
                 {/* Blue Dots - Medium */}
                 {[...Array(20)].map((_, i) => (
                   <motion.div
                     key={`blue-${i}`}
                     className="absolute w-3 h-3 bg-blue-600 rounded-full"
                     style={{
-                      left: '50%',
-                      top: '50%',
-                      transform: 'translate(-50%, -50%)',
+                      left: "50%",
+                      top: "50%",
+                      transform: "translate(-50%, -50%)",
                     }}
                     animate={{
                       x: [
@@ -128,16 +131,16 @@ const Home: React.FC = () => {
                     }}
                   />
                 ))}
-                
+
                 {/* Yellow Dots - Least */}
                 {[...Array(10)].map((_, i) => (
                   <motion.div
                     key={`yellow-${i}`}
                     className="absolute w-3 h-3 bg-yellow-400 rounded-full"
                     style={{
-                      left: '50%',
-                      top: '50%',
-                      transform: 'translate(-50%, -50%)',
+                      left: "50%",
+                      top: "50%",
+                      transform: "translate(-50%, -50%)",
                     }}
                     animate={{
                       x: [
@@ -180,7 +183,7 @@ const Home: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.6 }}
           >
-            Study<span style={{ color: '#c41610ff' }}>Bunny</span>
+            Study<span style={{ color: "#c41610ff" }}>Bunny</span>
           </motion.h1>
 
           <motion.p
@@ -191,12 +194,12 @@ const Home: React.FC = () => {
           >
             Collaborate with friends, share knowledge, and study together in
             real-time with
-            <span style={{ color: '#da8f02ff', fontWeight: '600' }}>
+            <span style={{ color: "#da8f02ff", fontWeight: "600" }}>
               {" "}
               voice chat
             </span>{" "}
             and
-            <span style={{ color: '#068bb0ff', fontWeight: '600' }}>
+            <span style={{ color: "#068bb0ff", fontWeight: "600" }}>
               {" "}
               interactive features
             </span>
@@ -214,7 +217,7 @@ const Home: React.FC = () => {
             <Link to="/rooms">
               <motion.button
                 className="px-8 py-4 text-white rounded-xl font-semibold shadow-lg text-lg"
-                style={{ backgroundColor: '#ae1207ff' }}
+                style={{ backgroundColor: "#ae1207ff" }}
                 whileHover={{
                   scale: 1.05,
                   y: -2,
@@ -284,7 +287,7 @@ const FeatureHeader: React.FC = () => {
     >
       <h2 className="text-5xl md:text-6xl font-bold text-slate-900 mb-4">
         Everything you need to{" "}
-        <span style={{ color: '#ecbe08ff' }}>study smarter</span>
+        <span style={{ color: "#ecbe08ff" }}>study smarter</span>
       </h2>
       <p className="text-xl text-slate-600 max-w-2xl mx-auto">
         Built for students who want to collaborate, compete, and succeed
@@ -376,7 +379,7 @@ const CTASection: React.FC = () => {
       <div className="absolute inset-0">
         <motion.div
           className="absolute top-0 left-1/4 w-96 h-96 rounded-full mix-blend-multiply filter blur-3xl opacity-20"
-          style={{ backgroundColor: '#cdf4c6ff' }}
+          style={{ backgroundColor: "#cdf4c6ff" }}
           animate={{
             x: [0, 50, 0],
             y: [0, 30, 0],
@@ -418,7 +421,7 @@ const CTASection: React.FC = () => {
         <Link to="/rooms">
           <motion.button
             className="inline-flex items-center gap-2 px-10 py-5 text-white rounded-xl font-semibold shadow-xl text-xl"
-            style={{ backgroundColor: '#c41610ff' }}
+            style={{ backgroundColor: "#c41610ff" }}
             whileHover={{
               scale: 1.05,
               y: -3,
