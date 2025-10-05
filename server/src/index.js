@@ -23,11 +23,15 @@ const CORS_ORIGIN = process.env.CORS_ALLOWED_ORIGINS
   ? process.env.CORS_ALLOWED_ORIGINS.split(",").map((o) => o.trim())
   : "*";
 
+console.log('🌐 CORS Configuration:', CORS_ORIGIN);
+
 const app = express();
 app.use(helmet());
 app.use(
   cors({
     origin: CORS_ORIGIN,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 app.use(express.json());
@@ -62,7 +66,8 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: CORS_ORIGIN,
-    methods: ["GET", "POST"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   },
 });
 
