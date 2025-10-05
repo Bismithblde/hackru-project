@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Excalidraw, MainMenu, WelcomeScreen } from "@excalidraw/excalidraw";
 import "@excalidraw/excalidraw/index.css";
 import { Socket } from "socket.io-client";
+import { SERVER_URL } from "../constants/config";
 
 interface WhiteboardProps {
   socket: Socket | null;
@@ -102,7 +103,7 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ socket, roomId }) => {
       const elements = excalidrawAPI.getSceneElements();
       const appState = excalidrawAPI.getAppState();
 
-      const response = await fetch('http://localhost:4000/api/whiteboards/save', {
+      const response = await fetch(`${SERVER_URL}/api/whiteboards/save`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

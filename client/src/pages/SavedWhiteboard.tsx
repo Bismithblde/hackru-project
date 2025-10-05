@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Excalidraw, MainMenu } from "@excalidraw/excalidraw";
 import "@excalidraw/excalidraw/index.css";
+import { SERVER_URL } from "../constants/config";
 
 const SavedWhiteboard: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -25,7 +26,7 @@ const SavedWhiteboard: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`http://localhost:4000/api/whiteboards/${id}`);
+      const response = await fetch(`${SERVER_URL}/api/whiteboards/${id}`);
       const data = await response.json();
 
       if (data.success) {
