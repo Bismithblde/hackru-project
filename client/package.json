@@ -14,6 +14,7 @@
     "@daily-co/daily-react": "^0.23.2",
     "@excalidraw/excalidraw": "^0.18.0",
     "@tailwindcss/vite": "^4.1.14",
+    "axios": "^1.12.2",
     "framer-motion": "^12.23.22",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",

@@ -5,6 +5,7 @@ import { join, emit, getSocket } from "../lib/socket";
 import { joinDailyRoom, leaveDailyRoom } from "../lib/daily";
 import { useRoom, useDailyRoom } from "../hooks";
 import { SOCKET_EVENTS } from "../constants";
+import { useRoomContext } from "../contexts/RoomContext";
 import Presence from "../components/Presence";
 import Chat from "../components/Chat";
 import AudioControls from "../components/AudioControls";
@@ -12,9 +13,16 @@ import Leaderboard from "../components/Leaderboard";
 import Whiteboard from "../components/Whiteboard";
 
 const Room: React.FC = () => {
-  const { id } = useParams();
-  const roomId = id || "room-1";
-  const [username, setUsername] = useState<string | null>(null);
+  const { code } = useParams();
+  const roomId = code || "room-1";
+  
+  // Get room data from context
+  const { currentRoom, fetchRooms, rooms } = useRoomContext();
+  
+  // Try to get username from localStorage
+  const storedUsername = localStorage.getItem("studybunny_username");
+  const [username, setUsername] = useState<string | null>(storedUsername);
+  
   const [activeTab, setActiveTab] = useState<"chat" | "whiteboard">("chat");
   const userIdRef = useRef<string>(uuidv4());
   const dailyContainerRef = useRef<HTMLDivElement>(null);
@@ -31,6 +39,14 @@ const Room: React.FC = () => {
     error: dailyRoomError,
     loading: dailyLoading,
   } = useDailyRoom(roomId);
+
+  // Fetch room data when component mounts
+  useEffect(() => {
+    fetchRooms();
+  }, []);
+
+  // Find the current room by code
+  const roomData = rooms.find((r) => r.code === code) || currentRoom;
 
   // Join socket room when username is set
   useEffect(() => {
@@ -104,13 +120,39 @@ const Room: React.FC = () => {
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between bg-white rounded-lg border border-slate-200 p-6">
-          <div>
+          <div className="flex-1">
             <h2 className="text-3xl font-bold text-slate-900">
-              Study Room {roomId}
+              {roomData?.name || `Study Room ${roomId}`}
             </h2>
-            <p className="text-sm text-slate-600 mt-1">
-              Collaborate and learn together
-            </p>
+            <div className="flex items-center gap-3 mt-2">
+              {code && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-slate-600">Room Code:</span>
+                  <span className="font-mono font-bold text-indigo-600 text-lg tracking-wider">
+                    {code.slice(0, 3)}-{code.slice(3)}
+                  </span>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(code);
+                      // Optional: Show a toast notification
+                      const btn = document.activeElement as HTMLButtonElement;
+                      const originalText = btn.textContent;
+                      btn.textContent = "✓";
+                      setTimeout(() => {
+                        btn.textContent = originalText || "Copy";
+                      }, 1500);
+                    }}
+                    className="px-2 py-1 bg-indigo-600 text-white text-xs rounded hover:bg-indigo-700 transition-colors"
+                  >
+                    Copy
+                  </button>
+                </div>
+              )}
+              <span className="text-sm text-slate-500">•</span>
+              <p className="text-sm text-slate-600">
+                Collaborate and learn together
+              </p>
+            </div>
           </div>
           <Link
             to="/rooms"

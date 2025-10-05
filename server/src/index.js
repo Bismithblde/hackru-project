@@ -8,6 +8,7 @@ const { Server } = require("socket.io");
 const { createRoomService } = require("./services/roomService");
 const { createSocketController } = require("./controllers/socketController");
 const { createDailyRoom } = require("./services/dailyService");
+const { roomRouter } = require("./routes/roomRoutes");
 
 const PORT = process.env.PORT || 4000;
 const CORS_ORIGIN = process.env.CORS_ALLOWED_ORIGINS
@@ -26,6 +27,9 @@ app.use(express.json());
 app.use(morgan("dev"));
 
 app.get("/", (req, res) => res.json({ status: "ok", time: Date.now() }));
+
+// Room management API routes
+app.use("/api/rooms", roomRouter);
 
 // Daily.co room endpoint
 app.get("/api/daily-room/:roomId", async (req, res) => {

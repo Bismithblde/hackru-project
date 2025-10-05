@@ -31,6 +31,7 @@ function createSocketController(io, roomService) {
       if (!ok) return;
       const out = {
         userId: payload.userId,
+        username: payload.username || "Anonymous",
         message: payload.message,
         ts: payload.ts || Date.now(),
       };
@@ -93,6 +94,15 @@ function createSocketController(io, roomService) {
       const { to } = payload;
       console.log(`[WebRTC] Forwarding ICE from ${socket.id} to ${to}`);
       if (to) io.to(to).emit("webrtc:ice", { ...payload, from: socket.id });
+    });
+
+    // Whiteboard events
+    socket.on("whiteboard-change", (payload = {}) => {
+      const { roomId, elements } = payload;
+      if (!roomId) return;
+
+      // Broadcast the whiteboard changes to all other users in the room
+      socket.to(roomId).emit("whiteboard-update", { elements });
     });
 
     socket.on("disconnect", () => {
