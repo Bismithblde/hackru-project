@@ -107,6 +107,7 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ socket, roomId }) => {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           elements,
           appState,

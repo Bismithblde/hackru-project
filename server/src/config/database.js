@@ -17,6 +17,7 @@ const connectDB = async () => {
   }
 
   try {
+    console.log('🔄 MongoDB: Attempting to connect...');
     const conn = await mongoose.connect(MONGODB_URI, {
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
@@ -45,6 +46,7 @@ const connectDB = async () => {
 
   } catch (error) {
     console.error('❌ MongoDB: Connection failed:', error.message);
+    console.error('❌ MongoDB: Full error:', error);
     console.warn('⚠️  MongoDB: Whiteboard persistence will be disabled');
     isConnected = false;
   }

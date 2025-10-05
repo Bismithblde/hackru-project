@@ -8,6 +8,7 @@ const { isDBConnected } = require('../config/database');
 async function saveWhiteboard(req, res) {
   // Check if MongoDB is connected
   if (!isDBConnected()) {
+    console.error('❌ MongoDB is not connected');
     return res.status(503).json({ 
       error: 'Database not available. Whiteboard persistence is currently disabled.' 
     });
@@ -16,7 +17,14 @@ async function saveWhiteboard(req, res) {
   try {
     const { elements, appState, roomId } = req.body;
 
+    console.log('📝 Received save request:', { 
+      elementsCount: elements?.length, 
+      hasAppState: !!appState, 
+      roomId 
+    });
+
     if (!elements || !Array.isArray(elements)) {
+      console.error('❌ Invalid whiteboard data - elements is not an array');
       return res.status(400).json({ error: 'Invalid whiteboard data' });
     }
 
