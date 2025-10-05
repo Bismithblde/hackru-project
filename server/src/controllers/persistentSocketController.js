@@ -1,7 +1,7 @@
 const { requireFields } = require("../utils/validator");
 const persistentRoomService = require("../services/persistentRoomService");
 const { isRedisAvailable } = require("../config/redis");
-const { registerQuizEvents } = require("./quizController");
+const { registerQuizEvents, cleanupRoomQuiz } = require("./quizController");
 
 /**
  * Enhanced Socket Controller with Redis Persistence
@@ -12,7 +12,7 @@ function createPersistentSocketController(io, roomService) {
     let lastAwardTs = 0;
 
     // Register Quiz events
-    registerQuizEvents(socket, io);
+    registerQuizEvents(socket, io, roomService);
 
     /**
      * Join room event - Enhanced with Redis persistence
@@ -99,6 +99,11 @@ function createPersistentSocketController(io, roomService) {
         // Broadcast presence update
         const users = roomService.getUsers(roomId);
         io.to(roomId).emit("presence:update", users);
+
+        // Clean up quiz if room is empty
+        if (users.length === 0) {
+          cleanupRoomQuiz(roomId);
+        }
 
         console.log(`[Socket] User ${userId} left room ${roomId}`);
       } catch (error) {

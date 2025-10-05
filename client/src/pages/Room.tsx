@@ -370,7 +370,7 @@ const Room: React.FC = () => {
                 <Leaderboard entries={leaderboard} />
               </div>
 
-              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg border border-slate-200 p-6">
+              <div id="quiz-section" className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg border border-slate-200 p-6">
                 <h3 className="text-lg font-semibold text-slate-900 mb-1 flex items-center gap-2">
                   <span>🎯</span> Study Quiz
                   {roomData?.createdBy === username && (

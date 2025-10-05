@@ -30,6 +30,7 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
   const [score, setScore] = useState(0);
   const [answered, setAnswered] = useState(false);
   const [userAnswers, setUserAnswers] = useState<Record<string, number>>({});
+  const [showStartNotification, setShowStartNotification] = useState(false);
 
   // Quiz creation form state
   const [quizTitle, setQuizTitle] = useState("");
@@ -60,6 +61,18 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
       setScore(0);
       setShowResult(false);
       setUserAnswers({});
+      
+      // Show notification that quiz has started
+      if (!isOwner) {
+        setShowStartNotification(true);
+        setTimeout(() => setShowStartNotification(false), 5000);
+        
+        // Auto-scroll to quiz section if not owner
+        const quizElement = document.getElementById('quiz-section');
+        if (quizElement) {
+          quizElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }
     };
 
     const handleQuizEnded = (data: any) => {
@@ -176,6 +189,7 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
     if (selectedAnswer === null || answered || !activeQuiz) return;
 
     const currentQuestion = activeQuiz.questions[currentQuestionIndex];
+    const isCorrect = selectedAnswer === currentQuestion.correctAnswer;
     setAnswered(true);
 
     // Save user's answer
@@ -185,17 +199,18 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
     });
 
     // Check if answer is correct
-    if (selectedAnswer === currentQuestion.correctAnswer) {
+    if (isCorrect) {
       setScore(score + 1);
     }
 
-    // Emit answer to server
+    // Emit answer to server with correctness flag
     emit("quiz:submitAnswer", {
       roomId,
       quizId: activeQuiz.id,
       questionId: currentQuestion.id,
       answer: selectedAnswer,
       username,
+      isCorrect,
     });
   };
 
@@ -240,10 +255,25 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
     );
   }
 
+  // Quiz start notification for non-owners
+  const quizStartNotification = showStartNotification && (
+    <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 animate-bounce">
+      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-4 rounded-lg shadow-2xl flex items-center gap-3">
+        <span className="text-2xl">🎯</span>
+        <div>
+          <p className="font-bold">Quiz Started!</p>
+          <p className="text-sm opacity-90">{activeQuiz?.title}</p>
+        </div>
+      </div>
+    </div>
+  );
+
   // Owner view - quiz creation form
   if (isOwner && showCreateForm) {
     return (
-      <div className="space-y-4 max-h-[500px] overflow-y-auto">
+      <>
+        {quizStartNotification}
+        <div className="space-y-4 max-h-[500px] overflow-y-auto">
         <div className="sticky top-0 bg-gradient-to-br from-indigo-50 to-purple-50 p-4 rounded-lg border border-indigo-200 z-10">
           <h4 className="font-semibold text-slate-900 mb-2">Create Quiz</h4>
           <input
@@ -337,13 +367,16 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
           </button>
         </div>
       </div>
+      </>
     );
   }
 
   // Owner view - quiz created but not started
   if (isOwner && activeQuiz && !showResult) {
     return (
-      <div className="space-y-4">
+      <>
+        {quizStartNotification}
+        <div className="space-y-4">
         <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg p-6 border-2 border-indigo-200">
           <div className="text-center">
             <div className="text-5xl mb-3">📝</div>
@@ -370,24 +403,30 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
           Delete Quiz
         </button>
       </div>
+      </>
     );
   }
 
   // Non-owner view - no quiz available
   if (!activeQuiz) {
     return (
-      <div className="text-center py-8 text-slate-500">
-        <div className="text-5xl mb-3">📝</div>
-        <p className="text-sm">Waiting for room owner to create a quiz...</p>
-      </div>
+      <>
+        {quizStartNotification}
+        <div className="text-center py-8 text-slate-500">
+          <div className="text-5xl mb-3">📝</div>
+          <p className="text-sm">Waiting for room owner to create a quiz...</p>
+        </div>
+      </>
     );
   }
 
   // Results view
-  if (showResult) {
+  if (showResult && activeQuiz) {
     const percentage = Math.round((score / activeQuiz.questions.length) * 100);
     return (
-      <div className="space-y-4">
+      <>
+        {quizStartNotification}
+        <div className="space-y-4">
         <div className="text-center p-6 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg border-2 border-indigo-200">
           <div className="text-6xl mb-4">
             {percentage >= 70 ? "🎉" : percentage >= 50 ? "👍" : "💪"}
@@ -408,15 +447,20 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
           Try Again
         </button>
       </div>
+      </>
     );
   }
 
   // Quiz taking view
+  if (!activeQuiz) return null;
+  
   const currentQuestion = activeQuiz.questions[currentQuestionIndex];
   const isLastQuestion = currentQuestionIndex === activeQuiz.questions.length - 1;
 
   return (
-    <div className="space-y-4">
+    <>
+      {quizStartNotification}
+      <div className="space-y-4">
       {/* Progress Bar */}
       <div className="space-y-2">
         <div className="flex justify-between items-center text-sm">
@@ -527,6 +571,7 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
         )}
       </div>
     </div>
+    </>
   );
 };
 

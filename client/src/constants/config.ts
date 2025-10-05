@@ -23,6 +23,18 @@ export const SOCKET_EVENTS = {
 
   // Game
   GAME_ANSWER: "game:answer",
+
+  // Quiz
+  QUIZ_GET_STATE: "quiz:getState",
+  QUIZ_CREATE: "quiz:create",
+  QUIZ_CREATED: "quiz:created",
+  QUIZ_START: "quiz:start",
+  QUIZ_STARTED: "quiz:started",
+  QUIZ_END: "quiz:end",
+  QUIZ_ENDED: "quiz:ended",
+  QUIZ_SUBMIT_ANSWER: "quiz:submitAnswer",
+  QUIZ_ANSWER_SUBMITTED: "quiz:answerSubmitted",
+  QUIZ_ERROR: "quiz:error",
 } as const;
 
 export const DAILY_CONFIG = {
