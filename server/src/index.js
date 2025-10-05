@@ -5,10 +5,18 @@ const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const { Server } = require("socket.io");
+const { connectDB, disconnectDB } = require("./config/database");
 const { createRoomService } = require("./services/roomService");
 const { createSocketController } = require("./controllers/socketController");
 const { createDailyRoom } = require("./services/dailyService");
 const { roomRouter } = require("./routes/roomRoutes");
+const {
+  saveWhiteboard,
+  loadWhiteboard,
+  listWhiteboards,
+  deleteWhiteboard,
+  updateWhiteboard,
+} = require("./controllers/whiteboardController");
 
 const PORT = process.env.PORT || 4000;
 const CORS_ORIGIN = process.env.CORS_ALLOWED_ORIGINS
@@ -30,6 +38,13 @@ app.get("/", (req, res) => res.json({ status: "ok", time: Date.now() }));
 
 // Room management API routes
 app.use("/api/rooms", roomRouter);
+
+// Whiteboard persistence routes
+app.post("/api/whiteboards/save", saveWhiteboard);
+app.get("/api/whiteboards/:id", loadWhiteboard);
+app.get("/api/whiteboards", listWhiteboards);
+app.put("/api/whiteboards/:id", updateWhiteboard);
+app.delete("/api/whiteboards/:id", deleteWhiteboard);
 
 // Daily.co room endpoint
 app.get("/api/daily-room/:roomId", async (req, res) => {
@@ -66,6 +81,9 @@ const shutdown = async () => {
   console.log("\n[Server] Shutting down gracefully...");
 
   try {
+    // Disconnect from MongoDB
+    await disconnectDB();
+
     // Close Socket.io connections
     io.close(() => {
       console.log("[Server] Socket.io connections closed");
@@ -91,7 +109,7 @@ const shutdown = async () => {
 process.on("SIGTERM", shutdown);
 process.on("SIGINT", shutdown);
 
-server.listen(PORT, "0.0.0.0", () => {
+server.listen(PORT, "0.0.0.0", async () => {
   console.log(`\n${"=".repeat(50)}`);
   console.log(`🚀 Server started successfully!`);
   console.log(`${"=".repeat(50)}`);
@@ -100,4 +118,7 @@ server.listen(PORT, "0.0.0.0", () => {
   console.log(`🌐 CORS Origins: ${CORS_ORIGIN}`);
   console.log(`${"=".repeat(50)}\n`);
   console.log(`Network access: http://192.168.40.38:${PORT}`);
+  
+  // Connect to MongoDB after server starts
+  await connectDB();
 });
