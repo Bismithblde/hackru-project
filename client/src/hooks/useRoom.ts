@@ -45,8 +45,13 @@ export function useRoom({ roomId, userId, username }: UseRoomOptions) {
     };
 
     const handleChatMessage = (message: Message) => {
-      console.log("[useRoom] Received chat message:", message);
-      setMessages((prev) => [...prev, message]);
+      console.log("[useRoom] ✅ Received chat message:", message);
+      console.log("[useRoom] Current messages count:", messages.length);
+      setMessages((prev) => {
+        const updated = [...prev, message];
+        console.log("[useRoom] Updated messages count:", updated.length);
+        return updated;
+      });
     };
 
     const handleChatHistory = (payload: { messages: Message[] }) => {

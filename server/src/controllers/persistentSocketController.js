@@ -137,8 +137,13 @@ function createPersistentSocketController(io, roomService) {
      * Chat message event - In-memory storage only (no Redis)
      */
     socket.on("chat:message", async (payload = {}) => {
+      console.log(`[Socket] Received chat:message event:`, payload);
+      
       const ok = requireFields(payload, ["roomId", "userId", "message"]);
-      if (!ok) return;
+      if (!ok) {
+        console.error(`[Socket] Chat message validation failed:`, payload);
+        return;
+      }
 
       const { roomId, userId, username, message, ts } = payload;
 
@@ -151,9 +156,12 @@ function createPersistentSocketController(io, roomService) {
         ts: ts || Date.now(),
       };
 
+      console.log(`[Socket] Created message object:`, out);
+
       // Store in memory
       if (!roomMessages.has(roomId)) {
         roomMessages.set(roomId, []);
+        console.log(`[Socket] Created new message array for room ${roomId}`);
       }
       const messages = roomMessages.get(roomId);
       messages.push(out);
@@ -163,9 +171,11 @@ function createPersistentSocketController(io, roomService) {
         messages.shift();
       }
 
+      console.log(`[Socket] Room ${roomId} now has ${messages.length} messages`);
+
       // Broadcast immediately to all users in room
       io.to(roomId).emit("chat:message", out);
-      console.log(`[Socket] Chat message stored and broadcast in room ${roomId} (in-memory only)`);
+      console.log(`[Socket] Broadcast chat:message to room ${roomId}:`, out);
     });
 
     /**
