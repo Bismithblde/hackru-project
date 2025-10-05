@@ -2,6 +2,8 @@ import { useState } from "react";
 import { CreateRoomModal } from "../components/CreateRoomModal";
 import { JoinRoomModal } from "../components/JoinRoomModal";
 import { useRoomContext } from "../contexts/RoomContext";
+import key from "../assets/key.png";
+import doorKey from "../assets/door-key.png";
 
 const Rooms = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -12,7 +14,7 @@ const Rooms = () => {
     <div className="p-6 space-y-8">
       {/* Header */}
       <div className="bg-white rounded-lg border border-slate-200 p-8">
-        <h2 className="text-4xl font-bold text-slate-900 mb-2">Study Rooms</h2>
+        <h2 className="text-4xl font-bold text-red-600 mb-2">Study Rooms</h2>
         <p className="text-slate-600">
           Create a new room or join an existing one with a code
         </p>
@@ -23,9 +25,12 @@ const Rooms = () => {
         {/* Create Room Card */}
         <button
           onClick={() => setShowCreateModal(true)}
-          className="group bg-gradient-to-br from-indigo-600 to-indigo-700 text-white rounded-lg p-8 hover:shadow-lg transition-all text-left"
+          className="group bg-gradient-to-br from-teal-600 to-teal-700 text-white rounded-lg p-8 hover:shadow-lg transition-all text-left"
         >
-          <div className="text-5xl mb-4">🐰✨</div>
+          <div className="text-5xl mb-4">
+            <img src={key} alt="Key" className="w-20 h-20 mx-auto" />
+          </div>
+
           <h3 className="text-2xl font-bold mb-2">Create Room</h3>
           <p className="text-indigo-100 mb-4">
             Start a new study room and invite others with a code
@@ -38,14 +43,20 @@ const Rooms = () => {
         {/* Join Room Card */}
         <button
           onClick={() => setShowJoinModal(true)}
-          className="group bg-white border-2 border-indigo-600 rounded-lg p-8 hover:shadow-lg transition-all text-left"
+          style={{ borderColor: "#e11010ff" }}
+          className="group bg-white border-2 rounded-lg p-8 hover:shadow-lg transition-all text-left"
         >
-          <div className="text-5xl mb-4">🔑</div>
+          <div className="text-5xl mb-4">
+            <img src={doorKey} alt="Door Key" className="w-20 h-20 mx-auto" />
+          </div>
           <h3 className="text-2xl font-bold text-slate-900 mb-2">Join Room</h3>
           <p className="text-slate-600 mb-4">
             Enter a 6-digit code to join an existing study room
           </p>
-          <div className="inline-flex items-center text-indigo-600 font-semibold group-hover:translate-x-1 transition-transform">
+          <div
+            style={{ color: "#e20101ff" }}
+            className="inline-flex items-center font-semibold group-hover:translate-x-1 transition-transform"
+          >
             Enter Code →
           </div>
         </button>
@@ -96,7 +107,7 @@ const Rooms = () => {
         <h3 className="text-xl font-bold text-slate-900 mb-4">How It Works</h3>
         <div className="grid md:grid-cols-3 gap-6">
           <div>
-            <div className="text-3xl mb-2">1️⃣</div>
+            <div className="text-3xl mb-2">-1-</div>
             <h4 className="font-semibold text-slate-900 mb-1">
               Create or Join
             </h4>
@@ -105,14 +116,14 @@ const Rooms = () => {
             </p>
           </div>
           <div>
-            <div className="text-3xl mb-2">2️⃣</div>
+            <div className="text-3xl mb-2">-2–</div>
             <h4 className="font-semibold text-slate-900 mb-1">Share Code</h4>
             <p className="text-sm text-slate-600">
               Share your room code with friends to invite them
             </p>
           </div>
           <div>
-            <div className="text-3xl mb-2">3️⃣</div>
+            <div className="text-3xl mb-2">–3-</div>
             <h4 className="font-semibold text-slate-900 mb-1">
               Study Together
             </h4>
