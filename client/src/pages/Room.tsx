@@ -29,6 +29,9 @@ const Room: React.FC = () => {
 
   // State to hide/show the meeting UI but keep the call running
   const [meetingHidden, setMeetingHidden] = useState(false);
+  
+  // State to expand/collapse the whiteboard
+  const [isWhiteboardExpanded, setIsWhiteboardExpanded] = useState(false);
 
   // Use custom hooks for room data and daily room
   const { users, messages, leaderboard, socketId } = useRoom({
@@ -310,9 +313,19 @@ const Room: React.FC = () => {
                   </div>
                 ) : (
                   <div
-                    className="p-6 flex items-center justify-center"
+                    className="p-6 flex items-center justify-center relative"
                     style={{ height: "100%" }}
                   >
+                    {/* Expand button */}
+                    {getSocket() && !isWhiteboardExpanded && (
+                      <button
+                        onClick={() => setIsWhiteboardExpanded(true)}
+                        className="absolute top-4 right-4 z-10 px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-lg flex items-center gap-2"
+                        title="Expand whiteboard"
+                      >
+                        <span>⛶</span> Expand
+                      </button>
+                    )}
                     {getSocket() ? (
                       <Whiteboard socket={getSocket()!} roomId={roomId} />
                     ) : (
@@ -325,6 +338,32 @@ const Room: React.FC = () => {
                 )}
               </div>
             </div>
+
+            {/* Expanded Whiteboard Overlay */}
+            {isWhiteboardExpanded && getSocket() && (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+                onClick={() => setIsWhiteboardExpanded(false)}
+              >
+                <div
+                  className="relative bg-white rounded-lg shadow-2xl"
+                  style={{ width: "90vw", height: "90vh" }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Close button */}
+                  <button
+                    onClick={() => setIsWhiteboardExpanded(false)}
+                    className="absolute top-4 right-4 z-10 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-lg flex items-center gap-2"
+                    title="Close expanded view"
+                  >
+                    <span>✕</span> Close
+                  </button>
+                  <div className="w-full h-full p-6">
+                    <Whiteboard socket={getSocket()!} roomId={roomId} />
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Leaderboard & Actions */}
             <div className="space-y-6">
