@@ -30,9 +30,11 @@ function createPersistentSocketController(io, roomService) {
       try {
         // Join Socket.io room
         socket.join(roomId);
+        console.log(`[Socket] ✅ Socket ${socket.id} joined Socket.io room ${roomId}`);
 
         // Add to in-memory room service (for presence)
         roomService.addUser(roomId, { socketId: socket.id, userId, username });
+        console.log(`[Socket] ✅ Added ${username} to in-memory room service for ${roomId}`);
 
         // Add to Redis (for persistence) - only if Redis is available
         if (isRedisAvailable()) {

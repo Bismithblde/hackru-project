@@ -35,7 +35,9 @@ export function connect(url = undefined) {
 export function join(roomId: string, userId: string, username: string) {
   connect();
   current = { roomId, userId, username };
+  console.log(`[Socket] Emitting join event - roomId: ${roomId}, userId: ${userId}, username: ${username}`);
   socket!.emit("join", { roomId, userId, username });
+  console.log(`[Socket] Join event emitted successfully`);
 }
 
 export function leave() {
@@ -57,6 +59,7 @@ export function off<E extends string>(event: E, cb?: (...args: any[]) => void) {
 
 export function emit(event: string, payload: any) {
   connect();
+  console.log(`[Socket] Emitting event: ${event}`, payload);
   socket!.emit(event, payload);
 }
 

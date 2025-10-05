@@ -73,9 +73,17 @@ function registerQuizEvents(socket, io, roomService) {
     // Initialize scores for this room
     roomScores.set(roomId, new Map());
 
+    // Get all sockets in the room to verify broadcast will reach them
+    const socketsInRoom = await io.in(roomId).fetchSockets();
+    console.log(`[Quiz] Room ${roomId} has ${socketsInRoom.length} sockets:`, socketsInRoom.map(s => s.id));
+
     console.log(`[Quiz] Broadcasting quiz:created to room ${roomId}...`);
     // Broadcast to all users in room
     io.to(roomId).emit('quiz:created', { roomId, quiz });
+    
+    // Also emit to the creator directly to ensure they get it
+    socket.emit('quiz:created', { roomId, quiz });
+    
     console.log(`[Quiz] ✅ Quiz created and broadcast successfully: "${quiz.title}" by ${quiz.createdBy}`);
   });
 
@@ -83,20 +91,29 @@ function registerQuizEvents(socket, io, roomService) {
    * Start quiz (owner only)
    */
   socket.on('quiz:start', async (payload) => {
+    console.log(`[Quiz] ✅ quiz:start received from ${socket.id}:`, payload);
     const { roomId, quizId } = payload;
-    if (!roomId || !quizId) return;
+    if (!roomId || !quizId) {
+      console.error(`[Quiz] quiz:start: Missing data - roomId: ${roomId}, quizId: ${quizId}`);
+      return;
+    }
 
     const quiz = roomQuizzes.get(roomId);
     if (!quiz) {
+      console.error(`[Quiz] quiz:start: Quiz not found for room ${roomId}`);
       return socket.emit('quiz:error', { message: 'Quiz not found' });
     }
 
     // Reset scores for new quiz session
     roomScores.set(roomId, new Map());
 
+    // Get all sockets in the room
+    const socketsInRoom = await io.in(roomId).fetchSockets();
+    console.log(`[Quiz] Broadcasting quiz:started to ${socketsInRoom.length} sockets in room ${roomId}`);
+
     // Broadcast quiz start to all users
     io.to(roomId).emit('quiz:started', { roomId, quiz });
-    console.log(`[Quiz] Quiz started in room ${roomId}: ${quiz.title}`);
+    console.log(`[Quiz] ✅ Quiz started and broadcast: "${quiz.title}" in room ${roomId}`);
   });
 
   /**
