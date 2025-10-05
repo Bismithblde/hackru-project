@@ -31,7 +31,7 @@ const Presence: React.FC<PresenceProps> = ({ users, meSocketId }) => {
           {users.map((u) => (
             <li
               key={u.socketId}
-              className="flex items-center justify-between bg-slate-50 rounded-lg p-3 border border-slate-200 hover:bg-slate-100 transition-colors"
+              className="flex items-center justify-between bg-slate-50 rounded-lg p-3 border border-slate-200 hover:bg-slate-100 transition-colors animate-fadeIn"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold">

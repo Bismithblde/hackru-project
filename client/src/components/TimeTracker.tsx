@@ -30,7 +30,9 @@ const TimeTracker: React.FC<TimeTrackerProps> = ({ roomId, currentUserId }) => {
 
   const fetchTimeStats = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/time-tracking/room/${roomId}`);
+      const response = await fetch(
+        `${API_BASE_URL}/api/time-tracking/room/${roomId}`
+      );
       const data = await response.json();
 
       if (data.success) {
@@ -83,7 +85,7 @@ const TimeTracker: React.FC<TimeTrackerProps> = ({ roomId, currentUserId }) => {
   }
 
   const totalUserCount = stats.length;
-  const activeUserCount = stats.filter(s => s.isCurrentlyActive).length;
+  const activeUserCount = stats.filter((s) => s.isCurrentlyActive).length;
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -124,7 +126,9 @@ const TimeTracker: React.FC<TimeTrackerProps> = ({ roomId, currentUserId }) => {
           {stats.length === 0 ? (
             <div className="px-4 py-8 text-center text-gray-500">
               <p className="text-sm">No time data yet</p>
-              <p className="text-xs mt-1">Stats will appear as users spend time in this room</p>
+              <p className="text-xs mt-1">
+                Stats will appear as users spend time in this room
+              </p>
             </div>
           ) : (
             <div className="divide-y divide-gray-100">
@@ -156,7 +160,9 @@ const TimeTracker: React.FC<TimeTrackerProps> = ({ roomId, currentUserId }) => {
                           <p className="font-medium text-gray-800 truncate">
                             {stat.username}
                             {stat.userId === currentUserId && (
-                              <span className="text-xs text-blue-600 ml-1">(You)</span>
+                              <span className="text-xs text-blue-600 ml-1">
+                                (You)
+                              </span>
                             )}
                           </p>
                           {stat.isCurrentlyActive && (
@@ -164,7 +170,8 @@ const TimeTracker: React.FC<TimeTrackerProps> = ({ roomId, currentUserId }) => {
                           )}
                         </div>
                         <p className="text-xs text-gray-500">
-                          {stat.sessionCount} session{stat.sessionCount !== 1 ? "s" : ""}
+                          {stat.sessionCount} session
+                          {stat.sessionCount !== 1 ? "s" : ""}
                         </p>
                       </div>
                     </div>

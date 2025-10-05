@@ -54,7 +54,10 @@ function createPersistentSocketController(io, roomService) {
         try {
           await mongoRoomService.joinRoom(roomId, userId, username);
         } catch (err) {
-          console.error("[Socket] Error adding participant to MongoDB:", err.message);
+          console.error(
+            "[Socket] Error adding participant to MongoDB:",
+            err.message
+          );
           // Continue anyway - room will still work
         }
 
@@ -210,12 +213,30 @@ function createPersistentSocketController(io, roomService) {
         await mongoRoomService.incrementMessages(roomId);
       } catch (err) {
         // Non-critical - just log
-        console.error("[Socket] Error incrementing message count:", err.message);
+        console.error(
+          "[Socket] Error incrementing message count:",
+          err.message
+        );
       }
 
       // Broadcast immediately to all users in room
       io.to(roomId).emit("chat:message", out);
       console.log(`[Socket] Broadcast chat:message to room ${roomId}:`, out);
+    });
+
+    /**
+     * Chat typing indicators
+     */
+    socket.on("chat:typing", (payload = {}) => {
+      const { roomId, username, userId } = payload;
+      // Broadcast to others in room (not self)
+      socket.to(roomId).emit("chat:typing", { username, userId });
+    });
+
+    socket.on("chat:stopTyping", (payload = {}) => {
+      const { roomId, username, userId } = payload;
+      // Broadcast to others in room (not self)
+      socket.to(roomId).emit("chat:stopTyping", { username, userId });
     });
 
     /**
@@ -316,14 +337,20 @@ function createPersistentSocketController(io, roomService) {
           try {
             await timeTrackingService.endTracking(roomId, userInfo.userId);
           } catch (err) {
-            console.error("[Socket] Error ending time tracking on disconnect:", err.message);
+            console.error(
+              "[Socket] Error ending time tracking on disconnect:",
+              err.message
+            );
           }
-          
+
           // Remove participant from MongoDB room
           try {
             await mongoRoomService.leaveRoom(roomId, userInfo.userId);
           } catch (err) {
-            console.error("[Socket] Error removing participant from MongoDB:", err.message);
+            console.error(
+              "[Socket] Error removing participant from MongoDB:",
+              err.message
+            );
           }
         }
       }

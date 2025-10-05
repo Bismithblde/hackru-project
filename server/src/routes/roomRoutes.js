@@ -9,7 +9,8 @@ const mongoRoomService = require("../services/mongoRoomService");
 // POST /api/rooms/create - Create a new room
 router.post("/create", async (req, res) => {
   try {
-    const { name, createdBy, description, maxParticipants, settings } = req.body;
+    const { name, createdBy, description, maxParticipants, settings } =
+      req.body;
 
     if (!name || !createdBy) {
       return res.status(400).json({
@@ -82,7 +83,7 @@ router.get("/", async (req, res) => {
   try {
     const limit = parseInt(req.query.limit || "100", 10);
     const allRooms = await mongoRoomService.getAllRooms(limit);
-    
+
     res.json({
       success: true,
       rooms: allRooms,

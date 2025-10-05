@@ -9,7 +9,13 @@ class MongoRoomService {
   /**
    * Create a new room
    */
-  async createRoom({ name, createdBy, description = "", maxParticipants = 10, settings = {} }) {
+  async createRoom({
+    name,
+    createdBy,
+    description = "",
+    maxParticipants = 10,
+    settings = {},
+  }) {
     try {
       const code = await Room.generateUniqueCode();
 
@@ -31,7 +37,9 @@ class MongoRoomService {
       });
 
       await room.save();
-      console.log(`[MongoRoomService] ✅ Created room: ${code} (${name}) by ${createdBy}`);
+      console.log(
+        `[MongoRoomService] ✅ Created room: ${code} (${name}) by ${createdBy}`
+      );
 
       return this.formatRoomResponse(room);
     } catch (error) {
@@ -46,7 +54,7 @@ class MongoRoomService {
   async getRoom(code) {
     try {
       const room = await Room.findOne({ code, isActive: true });
-      
+
       if (!room) {
         return null;
       }
@@ -64,7 +72,7 @@ class MongoRoomService {
   async getAllRooms(limit = 100) {
     try {
       const rooms = await Room.findActive().limit(limit);
-      return rooms.map(room => this.formatRoomResponse(room));
+      return rooms.map((room) => this.formatRoomResponse(room));
     } catch (error) {
       console.error("[MongoRoomService] Error getting all rooms:", error);
       throw error;
@@ -77,9 +85,12 @@ class MongoRoomService {
   async getRoomsByCreator(createdBy) {
     try {
       const rooms = await Room.findByCreator(createdBy);
-      return rooms.map(room => this.formatRoomResponse(room));
+      return rooms.map((room) => this.formatRoomResponse(room));
     } catch (error) {
-      console.error("[MongoRoomService] Error getting rooms by creator:", error);
+      console.error(
+        "[MongoRoomService] Error getting rooms by creator:",
+        error
+      );
       throw error;
     }
   }
@@ -226,7 +237,7 @@ class MongoRoomService {
         return null;
       }
 
-      const activeParticipants = room.participants.filter(p => p.isActive);
+      const activeParticipants = room.participants.filter((p) => p.isActive);
 
       return {
         code: room.code,
@@ -239,7 +250,7 @@ class MongoRoomService {
         totalQuizzes: room.analytics.totalQuizzes,
         createdAt: room.createdAt,
         lastActivityAt: room.lastActivityAt,
-        activeParticipants: activeParticipants.map(p => ({
+        activeParticipants: activeParticipants.map((p) => ({
           username: p.username,
           joinedAt: p.joinedAt,
           lastSeen: p.lastSeen,
@@ -262,7 +273,7 @@ class MongoRoomService {
         return null;
       }
 
-      const participant = room.participants.find(p => p.userId === userId);
+      const participant = room.participants.find((p) => p.userId === userId);
       if (participant) {
         participant.lastSeen = new Date();
         await room.save();
@@ -290,7 +301,7 @@ class MongoRoomService {
       const cutoffTime = new Date(Date.now() - inactiveMinutes * 60 * 1000);
       let cleanedCount = 0;
 
-      room.participants.forEach(participant => {
+      room.participants.forEach((participant) => {
         if (participant.isActive && participant.lastSeen < cutoffTime) {
           participant.isActive = false;
           cleanedCount++;
@@ -299,12 +310,17 @@ class MongoRoomService {
 
       if (cleanedCount > 0) {
         await room.save();
-        console.log(`[MongoRoomService] Cleaned ${cleanedCount} inactive participants from room ${code}`);
+        console.log(
+          `[MongoRoomService] Cleaned ${cleanedCount} inactive participants from room ${code}`
+        );
       }
 
       return { cleanedCount, room: this.formatRoomResponse(room) };
     } catch (error) {
-      console.error("[MongoRoomService] Error cleaning up participants:", error);
+      console.error(
+        "[MongoRoomService] Error cleaning up participants:",
+        error
+      );
       return null;
     }
   }
@@ -315,7 +331,7 @@ class MongoRoomService {
   formatRoomResponse(room) {
     if (!room) return null;
 
-    const activeParticipants = room.participants.filter(p => p.isActive);
+    const activeParticipants = room.participants.filter((p) => p.isActive);
 
     return {
       id: room.code,
@@ -327,7 +343,7 @@ class MongoRoomService {
       lastActivityAt: room.lastActivityAt.getTime(),
       maxParticipants: room.maxParticipants,
       participantCount: activeParticipants.length,
-      participants: activeParticipants.map(p => ({
+      participants: activeParticipants.map((p) => ({
         userId: p.userId,
         username: p.username,
         joinedAt: p.joinedAt.getTime(),

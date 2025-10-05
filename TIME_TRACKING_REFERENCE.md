@@ -3,10 +3,13 @@
 ## API Endpoints
 
 ### Get All Users in Room
+
 ```bash
 GET /api/time-tracking/room/:roomId
 ```
+
 **Response:**
+
 ```json
 {
   "success": true,
@@ -26,11 +29,13 @@ GET /api/time-tracking/room/:roomId
 ```
 
 ### Get Specific User Stats
+
 ```bash
 GET /api/time-tracking/room/:roomId/user/:userId
 ```
 
 ### Cleanup Stale Sessions
+
 ```bash
 POST /api/time-tracking/cleanup
 Content-Type: application/json
@@ -43,7 +48,7 @@ Content-Type: application/json
 ## Service Functions
 
 ```javascript
-const timeTrackingService = require('./services/timeTrackingService');
+const timeTrackingService = require("./services/timeTrackingService");
 
 // Start tracking
 await timeTrackingService.startTracking(roomId, userId, username);
@@ -101,15 +106,13 @@ function formatTime(milliseconds: number): string {
 ```tsx
 import TimeTracker from "../components/TimeTracker";
 
-<TimeTracker 
-  roomId={roomId} 
-  currentUserId={userId}
-/>
+<TimeTracker roomId={roomId} currentUserId={userId} />;
 ```
 
 ## Configuration
 
 ### Cleanup Schedule
+
 ```javascript
 // In server/src/index.js
 setInterval(async () => {
@@ -118,6 +121,7 @@ setInterval(async () => {
 ```
 
 ### UI Refresh Rate
+
 ```typescript
 // In TimeTracker.tsx
 useEffect(() => {
@@ -130,27 +134,31 @@ useEffect(() => {
 ## Common Operations
 
 ### Check if User Has Active Session
+
 ```javascript
 const session = await TimeTracking.findOne({
   roomId,
   userId,
-  isActive: true
+  isActive: true,
 });
 ```
 
 ### Get Top 5 Users by Time
+
 ```javascript
 const stats = await timeTrackingService.getRoomTimeStats(roomId);
 const top5 = stats.slice(0, 5);
 ```
 
 ### Calculate Session Duration
+
 ```javascript
 const duration = session.sessionEnd - session.sessionStart;
 // Returns milliseconds
 ```
 
 ### End All Sessions in Room
+
 ```javascript
 await TimeTracking.updateMany(
   { roomId, isActive: true },
@@ -161,16 +169,19 @@ await TimeTracking.updateMany(
 ## Troubleshooting
 
 ### Sessions Not Starting
+
 - Check MongoDB connection
 - Verify socket join event is firing
 - Check server logs for errors
 
 ### Stats Not Updating
+
 - Check API_BASE_URL is correct
 - Verify room ID matches
 - Check network tab for failed requests
 
 ### Stale Sessions
+
 - Run manual cleanup: `POST /api/time-tracking/cleanup`
 - Check cleanup schedule is running
 - Verify disconnect events are firing
@@ -178,6 +189,7 @@ await TimeTracking.updateMany(
 ## Testing
 
 ### Start a Session
+
 ```bash
 # Join room via socket
 socket.emit('join', {
@@ -188,11 +200,13 @@ socket.emit('join', {
 ```
 
 ### Check Stats
+
 ```bash
 curl http://localhost:4000/api/time-tracking/room/123
 ```
 
 ### Cleanup Test
+
 ```bash
 curl -X POST http://localhost:4000/api/time-tracking/cleanup \
   -H "Content-Type: application/json" \

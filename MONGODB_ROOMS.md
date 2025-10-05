@@ -7,28 +7,33 @@ Rooms are now persisted in MongoDB for better reliability and data persistence. 
 ## Features
 
 ### ✅ Persistent Rooms
+
 - Rooms stored in MongoDB survive server restarts
 - Automatic unique 6-digit code generation
 - Room settings and metadata persisted
 
 ### ✅ Participant Tracking
+
 - Track who's in each room
 - Active/inactive participant status
 - Join/leave timestamps
 - Last seen tracking
 
 ### ✅ Room Analytics
+
 - Total joins counter
 - Total messages counter
 - Total quizzes counter
 - Last activity tracking
 
 ### ✅ Auto-Expiration
+
 - Rooms expire after 7 days of inactivity
 - Activity extends expiration automatically
 - TTL index handles cleanup
 
 ### ✅ Room Settings
+
 - Public/private rooms
 - Feature toggles (chat, whiteboard, video, quiz)
 - Maximum participants limit
@@ -42,7 +47,7 @@ Rooms are now persisted in MongoDB for better reliability and data persistence. 
   createdBy: String,
   description: String,
   maxParticipants: Number (default: 10),
-  
+
   participants: [
     {
       userId: String,
@@ -52,7 +57,7 @@ Rooms are now persisted in MongoDB for better reliability and data persistence. 
       lastSeen: Date
     }
   ],
-  
+
   settings: {
     isPublic: Boolean,
     allowChat: Boolean,
@@ -60,13 +65,13 @@ Rooms are now persisted in MongoDB for better reliability and data persistence. 
     allowVideo: Boolean,
     allowQuiz: Boolean
   },
-  
+
   analytics: {
     totalJoins: Number,
     totalMessages: Number,
     totalQuizzes: Number
   },
-  
+
   isActive: Boolean,
   lastActivityAt: Date,
   expiresAt: Date,
@@ -78,7 +83,9 @@ Rooms are now persisted in MongoDB for better reliability and data persistence. 
 ## API Endpoints
 
 ### POST /api/rooms/create
+
 Create a new room
+
 ```json
 {
   "name": "Study Group",
@@ -92,13 +99,17 @@ Create a new room
 ```
 
 ### GET /api/rooms
+
 Get all active rooms (limit: 100)
 
 ### GET /api/rooms/:code
+
 Get specific room by code
 
 ### POST /api/rooms/join
+
 Join a room (validates existence)
+
 ```json
 {
   "code": "123456",
@@ -107,14 +118,17 @@ Join a room (validates existence)
 ```
 
 ### DELETE /api/rooms/:code
+
 Delete/deactivate a room
 
 ### GET /api/rooms/:code/stats
+
 Get detailed room statistics
 
 ## Socket Integration
 
 ### On Join
+
 ```javascript
 // Automatically:
 // 1. Adds user to Socket.io room
@@ -125,6 +139,7 @@ Get detailed room statistics
 ```
 
 ### On Message
+
 ```javascript
 // Automatically increments:
 // room.analytics.totalMessages
@@ -132,6 +147,7 @@ Get detailed room statistics
 ```
 
 ### On Quiz Create
+
 ```javascript
 // Automatically increments:
 // room.analytics.totalQuizzes
@@ -139,6 +155,7 @@ Get detailed room statistics
 ```
 
 ### On Disconnect
+
 ```javascript
 // Automatically:
 // 1. Ends time tracking
@@ -149,12 +166,12 @@ Get detailed room statistics
 ## Service Methods
 
 ```javascript
-const mongoRoomService = require('./services/mongoRoomService');
+const mongoRoomService = require("./services/mongoRoomService");
 
 // Create room
 const room = await mongoRoomService.createRoom({
   name: "Study Room",
-  createdBy: "Alice"
+  createdBy: "Alice",
 });
 
 // Get room
@@ -183,6 +200,7 @@ await mongoRoomService.cleanupInactiveParticipants("123456", 30);
 ## Indexes
 
 Optimized for performance:
+
 - `code` (unique)
 - `createdAt` (desc)
 - `lastActivityAt` (desc)
@@ -193,14 +211,16 @@ Optimized for performance:
 ## Migration from In-Memory
 
 ### Before
+
 ```javascript
 const rooms = new Map();
 rooms.set(code, { id, code, name, createdBy, createdAt });
 ```
 
 ### After
+
 ```javascript
-const mongoRoomService = require('./services/mongoRoomService');
+const mongoRoomService = require("./services/mongoRoomService");
 const room = await mongoRoomService.createRoom({ name, createdBy });
 ```
 
@@ -232,6 +252,7 @@ This ensures the app continues to function even if MongoDB operations fail.
 ## Testing
 
 ### Create a Room
+
 ```bash
 curl -X POST http://localhost:4000/api/rooms/create \
   -H "Content-Type: application/json" \
@@ -239,16 +260,19 @@ curl -X POST http://localhost:4000/api/rooms/create \
 ```
 
 ### Get Room
+
 ```bash
 curl http://localhost:4000/api/rooms/123456
 ```
 
 ### Get All Rooms
+
 ```bash
 curl http://localhost:4000/api/rooms
 ```
 
 ### Get Stats
+
 ```bash
 curl http://localhost:4000/api/rooms/123456/stats
 ```

@@ -1,17 +1,20 @@
 # Time Tracking Feature
 
 ## Overview
+
 The time tracking feature automatically monitors how long each user spends in a study room. It uses MongoDB to persist session data and provides real-time statistics.
 
 ## Features
 
 ### Automatic Tracking
+
 - **Session Start**: Time tracking begins automatically when a user joins a room
 - **Session End**: Time tracking stops when a user disconnects or leaves
 - **Multiple Sessions**: Tracks total time across multiple visits to the same room
 - **Real-time Updates**: Stats refresh every 30 seconds in the UI
 
 ### Data Tracked
+
 - Total time spent in the room (across all sessions)
 - Number of sessions
 - Active/inactive status
@@ -19,6 +22,7 @@ The time tracking feature automatically monitors how long each user spends in a 
 - Session start/end times
 
 ### Visual Display
+
 - **Collapsible Widget**: Expandable time tracker in the room sidebar
 - **Leaderboard Style**: Users ranked by total time spent
 - **Medals**: 🥇🥈🥉 for top 3 users
@@ -30,6 +34,7 @@ The time tracking feature automatically monitors how long each user spends in a 
 ### Backend Components
 
 #### Model: `TimeTracking.js`
+
 ```javascript
 {
   roomId: String,
@@ -44,6 +49,7 @@ The time tracking feature automatically monitors how long each user spends in a 
 ```
 
 #### Service: `timeTrackingService.js`
+
 - `startTracking(roomId, userId, username)` - Start a new session
 - `endTracking(roomId, userId)` - End the current session
 - `getRoomTimeStats(roomId)` - Get stats for all users in a room
@@ -51,6 +57,7 @@ The time tracking feature automatically monitors how long each user spends in a 
 - `cleanupStaleSessions(maxAgeMinutes)` - Clean up orphaned sessions
 
 #### API Routes: `/api/time-tracking`
+
 - `GET /room/:roomId` - Get all user stats for a room
 - `GET /room/:roomId/user/:userId` - Get specific user stats
 - `POST /cleanup` - Manually trigger stale session cleanup
@@ -58,6 +65,7 @@ The time tracking feature automatically monitors how long each user spends in a 
 ### Frontend Components
 
 #### Component: `TimeTracker.tsx`
+
 - Displays time statistics in a collapsible widget
 - Auto-refreshes every 30 seconds
 - Shows active users with pulse indicator
@@ -67,11 +75,14 @@ The time tracking feature automatically monitors how long each user spends in a 
 ## Integration
 
 ### Socket Events
+
 Time tracking integrates seamlessly with existing socket events:
+
 - **On Join**: `startTracking()` called when user joins room
 - **On Disconnect**: `endTracking()` called when user disconnects
 
 ### Automatic Cleanup
+
 - **Scheduled**: Every 30 minutes, stale sessions (>60 min) are cleaned up
 - **On Disconnect**: Sessions end automatically when users leave
 - **Manual**: Can be triggered via API endpoint
@@ -79,7 +90,9 @@ Time tracking integrates seamlessly with existing socket events:
 ## Usage
 
 ### View Time Stats in UI
+
 The TimeTracker component appears in the room sidebar:
+
 1. Click the "⏱️ Time Tracking" header to expand
 2. View your rank and total time spent
 3. See who else is currently active
@@ -88,16 +101,19 @@ The TimeTracker component appears in the room sidebar:
 ### API Usage
 
 **Get all users in a room:**
+
 ```bash
 GET /api/time-tracking/room/909744
 ```
 
 **Get specific user stats:**
+
 ```bash
 GET /api/time-tracking/room/909744/user/abc-123-def
 ```
 
 **Manually cleanup stale sessions:**
+
 ```bash
 POST /api/time-tracking/cleanup
 Content-Type: application/json
@@ -128,18 +144,21 @@ Content-Type: application/json
 ```
 
 ## Error Handling
+
 - Non-critical errors won't crash the app
 - Time tracking failures are logged but don't prevent room access
 - Stale session cleanup runs automatically to prevent data issues
 - Failed API requests show error message in UI
 
 ## Performance
+
 - **Lightweight**: Minimal overhead on socket connections
 - **Indexed**: MongoDB indexes on `roomId`, `userId`, and `isActive`
 - **Efficient**: Only tracks active sessions, auto-cleanup prevents bloat
 - **Scalable**: Can handle thousands of concurrent sessions
 
 ## Future Enhancements
+
 - Export time reports as CSV/PDF
 - Daily/weekly/monthly time summaries
 - Study streak tracking

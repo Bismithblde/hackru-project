@@ -6,6 +6,8 @@ import { joinDailyRoom, leaveDailyRoom } from "../lib/daily";
 import { useRoom, useDailyRoom } from "../hooks";
 import { SOCKET_EVENTS } from "../constants";
 import { useRoomContext } from "../contexts/RoomContext";
+import { useToast } from "../hooks/useToast";
+import { sounds } from "../utils/sounds";
 import Presence from "../components/Presence";
 import Chat from "../components/Chat";
 import AudioControls from "../components/AudioControls";
@@ -13,6 +15,8 @@ import Leaderboard from "../components/Leaderboard";
 import Whiteboard from "../components/Whiteboard";
 import Quiz from "../components/Quiz";
 import TimeTracker from "../components/TimeTracker";
+import Toast from "../components/Toast";
+import SoundToggle from "../components/SoundToggle";
 
 const Room: React.FC = () => {
   const { code } = useParams();
@@ -20,6 +24,25 @@ const Room: React.FC = () => {
 
   // Get room data from context
   const { currentRoom, fetchRooms, rooms } = useRoomContext();
+
+  // Toast notifications
+  const { toasts, removeToast, success, error, info } = useToast();
+
+  // Play sounds with toasts
+  const successWithSound = (message: string, duration?: number) => {
+    sounds.success();
+    success(message, duration);
+  };
+
+  const errorWithSound = (message: string, duration?: number) => {
+    sounds.error();
+    error(message, duration);
+  };
+
+  const infoWithSound = (message: string, duration?: number) => {
+    sounds.notification();
+    info(message, duration);
+  };
 
   // Try to get username from localStorage
   const storedUsername = localStorage.getItem("studybunny_username");
@@ -67,14 +90,33 @@ const Room: React.FC = () => {
     };
   }, [username, roomId]);
 
+  // Play sound when new users join
+  useEffect(() => {
+    if (users.length > 1) {
+      // Only play sound if not the initial load
+      sounds.userJoined();
+    }
+  }, [users.length]);
+
+  // Play sound when new messages arrive
+  useEffect(() => {
+    if (messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+      // Don't play sound for own messages
+      if (lastMessage.userId !== userIdRef.current) {
+        sounds.message();
+      }
+    }
+  }, [messages.length]);
+
   const handleMicEnabled = async () => {
     if (!username) {
-      alert("Please enter your username first");
+      errorWithSound("Please enter your username first");
       return;
     }
 
     if (!dailyRoomUrl) {
-      alert("Voice room is still loading. Please wait a moment and try again.");
+      errorWithSound("Voice room is still loading. Please wait a moment.");
       console.error("[Daily] Room URL not available yet");
       return;
     }
@@ -87,9 +129,11 @@ const Room: React.FC = () => {
         {
           onParticipantJoined: (participant) => {
             console.log("[Daily] Participant joined:", participant.user_name);
+            infoWithSound(`${participant.user_name} joined voice chat`);
           },
           onParticipantLeft: (participant) => {
             console.log("[Daily] Participant left:", participant.user_name);
+            infoWithSound(`${participant.user_name} left voice chat`);
           },
           onError: (error) => {
             console.error("[Daily] Error:", error);
@@ -98,9 +142,10 @@ const Room: React.FC = () => {
         dailyContainerRef.current || undefined
       );
       console.log("[Room] Successfully joined Daily room");
-    } catch (error: any) {
-      console.error("[Room] Failed to join Daily room:", error);
-      alert(`Failed to join voice chat: ${error.message || "Unknown error"}`);
+      successWithSound("Joined voice chat!");
+    } catch (err: any) {
+      console.error("[Room] Failed to join Daily room:", err);
+      errorWithSound(`Failed to join voice chat: ${err.message || "Unknown error"}`);
     }
   };
 
@@ -137,13 +182,7 @@ const Room: React.FC = () => {
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(code);
-                      // Optional: Show a toast notification
-                      const btn = document.activeElement as HTMLButtonElement;
-                      const originalText = btn.textContent;
-                      btn.textContent = "✓";
-                      setTimeout(() => {
-                        btn.textContent = originalText || "Copy";
-                      }, 1500);
+                      successWithSound("Room code copied to clipboard!");
                     }}
                     className="px-2 py-1 bg-indigo-600 text-white text-xs rounded hover:bg-indigo-700 transition-colors"
                   >
@@ -157,12 +196,15 @@ const Room: React.FC = () => {
               </p>
             </div>
           </div>
-          <Link
-            to="/rooms"
-            className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors flex items-center gap-2"
-          >
-            <span>←</span> Back to rooms
-          </Link>
+          <div className="flex items-center gap-3">
+            <SoundToggle />
+            <Link
+              to="/rooms"
+              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors flex items-center gap-2"
+            >
+              <span>←</span> Back to rooms
+            </Link>
+          </div>
         </div>
 
         <>
@@ -230,7 +272,7 @@ const Room: React.FC = () => {
                   onMicEnabled={handleMicEnabled}
                   onError={(err) => {
                     console.error("[Room] Mic error:", err);
-                    alert(`Microphone error: ${err}`);
+                    errorWithSound(`Microphone error: ${err}`);
                   }}
                 />
               </div>
@@ -305,6 +347,8 @@ const Room: React.FC = () => {
                     <Chat
                       messages={messages}
                       currentUserId={userIdRef.current}
+                      currentUsername={username || "Anonymous"}
+                      roomId={roomId}
                       onSend={handleSendMessage}
                     />
                   </div>
@@ -365,10 +409,7 @@ const Room: React.FC = () => {
             {/* Leaderboard & Actions */}
             <div className="space-y-6">
               {/* Time Tracker */}
-              <TimeTracker 
-                roomId={roomId} 
-                currentUserId={userIdRef.current}
-              />
+              <TimeTracker roomId={roomId} currentUserId={userIdRef.current} />
 
               <div className="bg-white rounded-lg border border-slate-200 p-6">
                 <h3 className="text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2">
@@ -438,6 +479,17 @@ const Room: React.FC = () => {
           }}
         />
       </div>
+
+      {/* Toast Notifications */}
+      {toasts.map((toast) => (
+        <Toast
+          key={toast.id}
+          message={toast.message}
+          type={toast.type}
+          duration={toast.duration}
+          onClose={() => removeToast(toast.id)}
+        />
+      ))}
     </div>
   );
 };

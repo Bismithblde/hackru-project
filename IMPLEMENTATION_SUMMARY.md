@@ -5,11 +5,13 @@
 ### Backend (Node.js + MongoDB)
 
 1. **MongoDB Model** (`server/src/models/TimeTracking.js`)
+
    - Tracks user sessions with start/end times
    - Stores total time per user per room
    - Indexed for fast queries
 
 2. **Service Layer** (`server/src/services/timeTrackingService.js`)
+
    - `startTracking()` - Begins tracking when user joins
    - `endTracking()` - Ends tracking when user leaves
    - `getRoomTimeStats()` - Returns leaderboard-style stats
@@ -17,11 +19,13 @@
    - `cleanupStaleSessions()` - Handles orphaned sessions
 
 3. **API Routes** (`server/src/routes/timeTracking.js`)
+
    - `GET /api/time-tracking/room/:roomId` - All users in room
    - `GET /api/time-tracking/room/:roomId/user/:userId` - Specific user
    - `POST /api/time-tracking/cleanup` - Manual cleanup
 
 4. **Socket Integration** (`server/src/controllers/persistentSocketController.js`)
+
    - Auto-starts tracking on `join` event
    - Auto-ends tracking on `disconnect` event
    - Handles multiple rooms per user
@@ -33,6 +37,7 @@
 ### Frontend (React + TypeScript)
 
 1. **TimeTracker Component** (`client/src/components/TimeTracker.tsx`)
+
    - Collapsible widget with stats
    - Shows top users with medals (🥇🥈🥉)
    - Active user indicator (green pulse)
@@ -41,6 +46,7 @@
    - Formats time as hours/minutes/seconds
 
 2. **Room Integration** (`client/src/pages/Room.tsx`)
+
    - Added TimeTracker to sidebar
    - Positioned above leaderboard
    - Passes roomId and userId props
@@ -88,10 +94,13 @@ MongoDB: Session ended, duration calculated
 ## 🔧 Configuration
 
 ### Environment Variables
+
 No additional env vars needed - uses existing MongoDB connection.
 
 ### MongoDB Indexes
+
 Automatically created on model initialization:
+
 - `roomId + userId` (compound)
 - `roomId + isActive` (compound)
 
@@ -116,27 +125,30 @@ Automatically created on model initialization:
 ## 🚀 How to Use
 
 ### As a User
+
 1. Join a study room (tracking starts automatically)
 2. Click "⏱️ Time Tracking" to expand
 3. See your rank and time compared to others
 4. Leave room (tracking stops automatically)
 
 ### As a Developer
+
 ```javascript
 // Get stats for a room
-fetch('/api/time-tracking/room/123')
-  .then(r => r.json())
-  .then(data => console.log(data.users));
+fetch("/api/time-tracking/room/123")
+  .then((r) => r.json())
+  .then((data) => console.log(data.users));
 
 // Get stats for a specific user
-fetch('/api/time-tracking/room/123/user/abc')
-  .then(r => r.json())
-  .then(data => console.log(data.stats));
+fetch("/api/time-tracking/room/123/user/abc")
+  .then((r) => r.json())
+  .then((data) => console.log(data.stats));
 ```
 
 ## 📝 Files Created/Modified
 
 ### New Files (6)
+
 1. `server/src/models/TimeTracking.js` - MongoDB model
 2. `server/src/services/timeTrackingService.js` - Business logic
 3. `server/src/routes/timeTracking.js` - API endpoints
@@ -145,6 +157,7 @@ fetch('/api/time-tracking/room/123/user/abc')
 6. `IMPLEMENTATION_SUMMARY.md` - This file
 
 ### Modified Files (4)
+
 1. `server/src/controllers/persistentSocketController.js` - Added tracking hooks
 2. `server/src/index.js` - Added routes and cleanup scheduler
 3. `client/src/pages/Room.tsx` - Added TimeTracker component
@@ -177,6 +190,7 @@ fetch('/api/time-tracking/room/123/user/abc')
 ## 🎓 Next Steps
 
 Suggested enhancements:
+
 1. ✨ Add time-based achievements
 2. 📊 Create weekly/monthly reports
 3. 🎯 Integrate with points/leaderboard system

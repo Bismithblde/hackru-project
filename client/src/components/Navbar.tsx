@@ -16,63 +16,57 @@ const Navbar: React.FC = () => {
   ];
 
   return (
-    <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+    <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo and Brand */}
           <Link
             to="/"
-            className="flex items-center gap-3 group transition-transform hover:scale-105"
+            className="flex items-center gap-3 group"
           >
-            <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center overflow-hidden shadow-md group-hover:shadow-lg transition-shadow">
+            <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center overflow-hidden">
               <img
                 src={bunnyLogo}
                 alt="StudyBunny"
-                className="w-8 h-8 object-contain"
+                className="w-7 h-7 object-contain"
               />
             </div>
-            <div className="flex flex-col">
-              <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            <div>
+              <h1 className="text-xl font-bold text-slate-900">
                 StudyBunny
               </h1>
-              <p className="text-xs text-slate-500 hidden sm:block">
-                Collaborate & Learn Together
-              </p>
             </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
-                className={`relative px-3 py-2 font-medium transition-colors ${
+                className={`px-4 py-2 rounded-md font-medium transition-colors ${
                   isActive(link.path)
-                    ? "text-indigo-600"
-                    : "text-slate-600 hover:text-slate-900"
+                    ? "bg-indigo-50 text-indigo-600"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                 }`}
               >
                 {link.label}
-                {isActive(link.path) && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full" />
-                )}
               </Link>
             ))}
 
             {/* CTA Button */}
             <Link
               to="/rooms"
-              className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium shadow-md hover:shadow-lg transition-all hover:scale-105"
+              className="ml-4 px-4 py-2 bg-indigo-600 text-white rounded-md font-medium hover:bg-indigo-700 transition-colors"
             >
-              Create Room
+              Get Started
             </Link>
           </div>
 
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg hover:bg-slate-100 transition-colors"
+            className="md:hidden p-2 rounded-md hover:bg-slate-100 transition-colors"
             aria-label="Toggle menu"
           >
             {mobileMenuOpen ? (
@@ -109,14 +103,14 @@ const Navbar: React.FC = () => {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-slate-200 animate-slideDown">
-            <div className="flex flex-col space-y-2">
+          <div className="md:hidden pb-4 border-t border-slate-200 animate-slideDown">
+            <div className="flex flex-col space-y-1 pt-2">
               {navLinks.map((link) => (
                 <Link
                   key={link.path}
                   to={link.path}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`px-4 py-3 rounded-lg font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-md font-medium transition-colors ${
                     isActive(link.path)
                       ? "bg-indigo-50 text-indigo-600"
                       : "text-slate-600 hover:bg-slate-50"
@@ -128,9 +122,9 @@ const Navbar: React.FC = () => {
               <Link
                 to="/rooms"
                 onClick={() => setMobileMenuOpen(false)}
-                className="px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium text-center shadow-md hover:shadow-lg transition-all"
+                className="mx-4 mt-2 px-4 py-2 bg-indigo-600 text-white rounded-md font-medium text-center hover:bg-indigo-700 transition-colors"
               >
-                Create Room
+                Get Started
               </Link>
             </div>
           </div>
@@ -141,3 +135,4 @@ const Navbar: React.FC = () => {
 };
 
 export default Navbar;
+

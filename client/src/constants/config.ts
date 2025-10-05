@@ -17,6 +17,8 @@ export const SOCKET_EVENTS = {
 
   // Chat
   CHAT_MESSAGE: "chat:message",
+  CHAT_TYPING: "chat:typing",
+  CHAT_STOP_TYPING: "chat:stopTyping",
 
   // Points
   POINTS_AWARD: "points:award",

@@ -10,7 +10,7 @@ router.get("/room/:roomId", async (req, res) => {
   try {
     const { roomId } = req.params;
     const stats = await timeTrackingService.getRoomTimeStats(roomId);
-    
+
     res.json({
       success: true,
       roomId,
@@ -35,7 +35,7 @@ router.get("/room/:roomId/user/:userId", async (req, res) => {
   try {
     const { roomId, userId } = req.params;
     const stats = await timeTrackingService.getUserTimeStats(roomId, userId);
-    
+
     res.json({
       success: true,
       roomId,
@@ -59,8 +59,10 @@ router.get("/room/:roomId/user/:userId", async (req, res) => {
 router.post("/cleanup", async (req, res) => {
   try {
     const { maxAgeMinutes = 60 } = req.body;
-    const cleanedCount = await timeTrackingService.cleanupStaleSessions(maxAgeMinutes);
-    
+    const cleanedCount = await timeTrackingService.cleanupStaleSessions(
+      maxAgeMinutes
+    );
+
     res.json({
       success: true,
       message: `Cleaned up ${cleanedCount} stale sessions`,
