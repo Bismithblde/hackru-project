@@ -102,6 +102,11 @@ function createRoomService() {
     return cur;
   }
 
+  function setPoints(roomId, userId, username, points) {
+    const lb = ensureLeaderboard(roomId);
+    lb.set(userId, { userId, username, points });
+  }
+
   function getLeaderboard(roomId, top = 10) {
     const lb = leaderboards.get(roomId);
     if (!lb) return [];
@@ -117,6 +122,7 @@ function createRoomService() {
     removeUserBySocket,
     getUsers,
     addPoints,
+    setPoints,
     getLeaderboard,
     onRoomEmpty,
   };

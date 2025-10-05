@@ -326,6 +326,55 @@ class MongoRoomService {
   }
 
   /**
+   * Update leaderboard for a room
+   */
+  async updateLeaderboard(code, userId, username, points) {
+    try {
+      const room = await Room.findOne({ code, isActive: true });
+
+      if (!room) {
+        console.log(
+          `[MongoRoomService] ⚠️ Room not found for leaderboard update: ${code}`
+        );
+        return null;
+      }
+
+      room.updateLeaderboard(userId, username, points);
+      await room.save();
+
+      console.log(
+        `[MongoRoomService] ✅ Updated leaderboard for ${username} in room ${code}: ${points} points`
+      );
+
+      return room.getLeaderboard();
+    } catch (error) {
+      console.error("[MongoRoomService] Error updating leaderboard:", error);
+      return null;
+    }
+  }
+
+  /**
+   * Get leaderboard for a room
+   */
+  async getLeaderboard(code) {
+    try {
+      const room = await Room.findOne({ code, isActive: true });
+
+      if (!room) {
+        console.log(
+          `[MongoRoomService] ⚠️ Room not found for leaderboard: ${code}`
+        );
+        return [];
+      }
+
+      return room.getLeaderboard();
+    } catch (error) {
+      console.error("[MongoRoomService] Error getting leaderboard:", error);
+      return [];
+    }
+  }
+
+  /**
    * Format room response (consistent format)
    */
   formatRoomResponse(room) {
@@ -350,6 +399,7 @@ class MongoRoomService {
       })),
       settings: room.settings,
       analytics: room.analytics,
+      leaderboard: room.getLeaderboard(),
       isActive: room.isActive,
     };
   }

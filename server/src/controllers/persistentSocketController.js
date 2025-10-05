@@ -119,6 +119,34 @@ function createPersistentSocketController(io, roomService) {
         // Broadcast presence update to all users in room
         const users = roomService.getUsers(roomId);
         io.to(roomId).emit("presence:update", users);
+
+        // Load and sync leaderboard from MongoDB
+        try {
+          const persistedLeaderboard = await mongoRoomService.getLeaderboard(
+            roomId
+          );
+          if (persistedLeaderboard && persistedLeaderboard.length > 0) {
+            // Initialize in-memory leaderboard from MongoDB
+            persistedLeaderboard.forEach((entry) => {
+              roomService.setPoints(
+                roomId,
+                entry.userId,
+                entry.username,
+                entry.points
+              );
+            });
+            
+            // Send updated leaderboard to all users
+            const leaderboard = roomService.getLeaderboard(roomId);
+            io.to(roomId).emit("points:update", { roomId, leaderboard });
+            console.log(
+              `[Socket] Loaded ${persistedLeaderboard.length} leaderboard entries from MongoDB for room ${roomId}`
+            );
+          }
+        } catch (err) {
+          console.error("[Socket] Error loading leaderboard:", err.message);
+          // Continue anyway - leaderboard will start fresh
+        }
       } catch (error) {
         console.error("[Socket] Error in join handler:", error);
         socket.emit("error", { message: "Failed to join room" });
@@ -295,9 +323,20 @@ function createPersistentSocketController(io, roomService) {
         });
       lastAwardTs = now;
 
-      // update leaderboard
+      // update leaderboard (in-memory)
       roomService.addPoints(roomId, toUserId, toUsername || "unknown", pts);
       const leaderboard = roomService.getLeaderboard(roomId);
+      
+      // Persist to MongoDB
+      const userEntry = leaderboard.find((e) => e.userId === toUserId);
+      if (userEntry) {
+        mongoRoomService
+          .updateLeaderboard(roomId, toUserId, userEntry.username, userEntry.points)
+          .catch((err) =>
+            console.error("[Socket] Error persisting leaderboard:", err)
+          );
+      }
+
       io.to(roomId).emit("points:update", { roomId, leaderboard });
     });
 

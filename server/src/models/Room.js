@@ -130,6 +130,28 @@ const roomSchema = new mongoose.Schema(
         default: 0,
       },
     },
+
+    // Leaderboard - persisted points for room participants
+    leaderboard: [
+      {
+        userId: {
+          type: String,
+          required: true,
+        },
+        username: {
+          type: String,
+          required: true,
+        },
+        points: {
+          type: Number,
+          default: 0,
+        },
+        lastUpdated: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
   },
   {
     timestamps: true, // Adds createdAt and updatedAt
@@ -214,6 +236,39 @@ roomSchema.methods.incrementMessages = function () {
 roomSchema.methods.incrementQuizzes = function () {
   this.analytics.totalQuizzes += 1;
   this.updateActivity();
+};
+
+// Method to update leaderboard
+roomSchema.methods.updateLeaderboard = function (userId, username, points) {
+  const entry = this.leaderboard.find((e) => e.userId === userId);
+
+  if (entry) {
+    entry.points = points;
+    entry.username = username; // Update username in case it changed
+    entry.lastUpdated = new Date();
+  } else {
+    this.leaderboard.push({
+      userId,
+      username,
+      points,
+      lastUpdated: new Date(),
+    });
+  }
+
+  // Sort leaderboard by points descending
+  this.leaderboard.sort((a, b) => b.points - a.points);
+  this.updateActivity();
+};
+
+// Method to get leaderboard
+roomSchema.methods.getLeaderboard = function () {
+  return this.leaderboard
+    .map((entry) => ({
+      userId: entry.userId,
+      username: entry.username,
+      points: entry.points,
+    }))
+    .sort((a, b) => b.points - a.points);
 };
 
 // Static method to find active rooms
