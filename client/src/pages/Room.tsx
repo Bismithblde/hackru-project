@@ -28,7 +28,7 @@ const Room: React.FC = () => {
   const dailyContainerRef = useRef<HTMLDivElement>(null);
 
   // Toggle for Daily popup
-  const [showDaily, setShowDaily] = useState(false);
+  const [showDaily, setShowDaily] = useState(true);
 
   // Use custom hooks for room data and daily room
   const { users, messages, leaderboard, socketId } = useRoom({
