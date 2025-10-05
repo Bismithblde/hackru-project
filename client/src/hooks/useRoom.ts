@@ -48,16 +48,25 @@ export function useRoom({ roomId, userId, username }: UseRoomOptions) {
       setMessages((prev) => [...prev, message]);
     };
 
+    const handleChatHistory = (payload: { messages: Message[] }) => {
+      console.log("[useRoom] Received chat history:", payload.messages?.length || 0, "messages");
+      if (payload.messages && Array.isArray(payload.messages)) {
+        setMessages(payload.messages);
+      }
+    };
+
     // Register event listeners
     on(SOCKET_EVENTS.PRESENCE_UPDATE, handlePresenceUpdate);
     on(SOCKET_EVENTS.POINTS_UPDATE, handlePointsUpdate);
     on(SOCKET_EVENTS.CHAT_MESSAGE, handleChatMessage);
+    on("chat:history", handleChatHistory); // Listen for chat history when joining
 
     // Cleanup
     return () => {
       off(SOCKET_EVENTS.PRESENCE_UPDATE, handlePresenceUpdate);
       off(SOCKET_EVENTS.POINTS_UPDATE, handlePointsUpdate);
       off(SOCKET_EVENTS.CHAT_MESSAGE, handleChatMessage);
+      off("chat:history", handleChatHistory);
       leave();
     };
   }, [username, roomId, userId]);
