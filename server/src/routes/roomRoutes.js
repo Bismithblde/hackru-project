@@ -1,27 +1,42 @@
 const express = require("express");
 const router = express.Router();
 
-// In-memory room storage (in production, use a database)
+/**
+ * Simple in-memory room storage (no Redis)
+ */
 const rooms = new Map();
 
-// Generate a random 6-digit code
-function generateRoomCode() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
+function generateUniqueRoomCode() {
+  let code;
+  let attempts = 0;
+  const MAX_ATTEMPTS = 20;
 
-// Ensure code is unique
-function generateUniqueCode() {
-  let code = generateRoomCode();
-  while (rooms.has(code)) {
-    code = generateRoomCode();
+  do {
+    code = Math.floor(100000 + Math.random() * 900000).toString();
+    attempts++;
+
+    if (attempts > MAX_ATTEMPTS) {
+      throw new Error("Unable to generate unique room code. Please try again.");
+    }
+  } while (rooms.has(code)); // Check for collision!
+
+  if (attempts > 1) {
+    console.log(
+      `[RoomCode] Generated: ${code} (collision avoided, attempts: ${attempts})`
+    );
   }
+
   return code;
 }
 
+/**
+ * Room Management Routes
+ */
+
 // POST /api/rooms/create - Create a new room
-router.post("/create", (req, res) => {
+router.post("/create", async (req, res) => {
   try {
-    const { name, createdBy, maxParticipants } = req.body;
+    const { name, createdBy, maxParticipants = 10 } = req.body;
 
     if (!name || !createdBy) {
       return res.status(400).json({
@@ -30,19 +45,18 @@ router.post("/create", (req, res) => {
       });
     }
 
-    const code = generateUniqueCode();
+    const code = generateUniqueRoomCode(); // Now collision-safe!
     const room = {
       id: code,
       code,
-      name: name.trim(),
-      createdBy: createdBy.trim(),
+      name,
+      createdBy,
       createdAt: Date.now(),
+      maxParticipants,
       participantCount: 0,
-      maxParticipants: maxParticipants || 10,
     };
 
     rooms.set(code, room);
-
     console.log(`[Room Created] Code: ${code}, Name: ${name}`);
 
     res.json({
@@ -53,13 +67,13 @@ router.post("/create", (req, res) => {
     console.error("Error creating room:", error);
     res.status(500).json({
       success: false,
-      error: "Failed to create room",
+      error: error.message || "Failed to create room",
     });
   }
 });
 
 // POST /api/rooms/join - Join a room by code
-router.post("/join", (req, res) => {
+router.post("/join", async (req, res) => {
   try {
     const { code, username } = req.body;
 
@@ -89,13 +103,13 @@ router.post("/join", (req, res) => {
     console.error("Error joining room:", error);
     res.status(500).json({
       success: false,
-      error: "Failed to join room",
+      error: error.message || "Failed to join room",
     });
   }
 });
 
 // GET /api/rooms - Get all active rooms
-router.get("/", (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const allRooms = Array.from(rooms.values());
     res.json({
@@ -106,13 +120,13 @@ router.get("/", (req, res) => {
     console.error("Error fetching rooms:", error);
     res.status(500).json({
       success: false,
-      error: "Failed to fetch rooms",
+      error: error.message || "Failed to fetch rooms",
     });
   }
 });
 
 // GET /api/rooms/:code - Get room by code
-router.get("/:code", (req, res) => {
+router.get("/:code", async (req, res) => {
   try {
     const { code } = req.params;
     const room = rooms.get(code);
@@ -132,17 +146,18 @@ router.get("/:code", (req, res) => {
     console.error("Error fetching room:", error);
     res.status(500).json({
       success: false,
-      error: "Failed to fetch room",
+      error: error.message || "Failed to fetch room",
     });
   }
 });
 
 // DELETE /api/rooms/:code - Delete a room
-router.delete("/:code", (req, res) => {
+router.delete("/:code", async (req, res) => {
   try {
     const { code } = req.params;
-    
-    if (!rooms.has(code)) {
+
+    const room = rooms.get(code);
+    if (!room) {
       return res.status(404).json({
         success: false,
         error: "Room not found",
@@ -160,10 +175,69 @@ router.delete("/:code", (req, res) => {
     console.error("Error deleting room:", error);
     res.status(500).json({
       success: false,
-      error: "Failed to delete room",
+      error: error.message || "Failed to delete room",
     });
   }
 });
 
-// Export both router and rooms Map (for socket updates)
-module.exports = { roomRouter: router, roomsMap: rooms };
+// GET /api/rooms/:code/messages - Get message history
+router.get("/:code/messages", async (req, res) => {
+  try {
+    const { code } = req.params;
+    const limit = parseInt(req.query.limit || "50", 10);
+
+    const messages = await roomService.getMessages(code, limit);
+
+    res.json({
+      success: true,
+      messages,
+      count: messages.length,
+    });
+  } catch (error) {
+    console.error("Error fetching messages:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message || "Failed to fetch messages",
+    });
+  }
+});
+
+// GET /api/rooms/:code/whiteboard - Get whiteboard state
+router.get("/:code/whiteboard", async (req, res) => {
+  try {
+    const { code } = req.params;
+    const whiteboard = await roomService.getWhiteboard(code);
+
+    res.json({
+      success: true,
+      whiteboard,
+    });
+  } catch (error) {
+    console.error("Error fetching whiteboard:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message || "Failed to fetch whiteboard",
+    });
+  }
+});
+
+// GET /api/rooms/:code/stats - Get room statistics
+router.get("/:code/stats", async (req, res) => {
+  try {
+    const { code } = req.params;
+    const stats = await roomService.getRoomStats(code);
+
+    res.json({
+      success: true,
+      stats,
+    });
+  } catch (error) {
+    console.error("Error fetching stats:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message || "Failed to fetch stats",
+    });
+  }
+});
+
+module.exports = { roomRouter: router };

@@ -22,7 +22,10 @@ export const roomService = {
    */
   createRoom: async (data: CreateRoomRequest): Promise<CreateRoomResponse> => {
     try {
-      const response = await api.post<CreateRoomResponse>("/api/rooms/create", data);
+      const response = await api.post<CreateRoomResponse>(
+        "/api/rooms/create",
+        data
+      );
       return response.data;
     } catch (error: any) {
       return {
@@ -37,7 +40,10 @@ export const roomService = {
    */
   joinRoom: async (data: JoinRoomRequest): Promise<JoinRoomResponse> => {
     try {
-      const response = await api.post<JoinRoomResponse>("/api/rooms/join", data);
+      const response = await api.post<JoinRoomResponse>(
+        "/api/rooms/join",
+        data
+      );
       return response.data;
     } catch (error: any) {
       return {
@@ -80,7 +86,9 @@ export const roomService = {
   /**
    * Delete a room (cleanup)
    */
-  deleteRoom: async (code: string): Promise<{ success: boolean; error?: string }> => {
+  deleteRoom: async (
+    code: string
+  ): Promise<{ success: boolean; error?: string }> => {
     try {
       const response = await api.delete(`/api/rooms/${code}`);
       return response.data;

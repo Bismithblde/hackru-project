@@ -24,7 +24,7 @@ const Home: React.FC = () => {
   // Hero parallax effects
   const heroY = useTransform(smoothProgress, [0, 0.8], [0, 300]);
   const heroScale = useTransform(smoothProgress, [0, 0.5], [1, 0.95]);
-  
+
   // Buttons fade out faster but start later
   const buttonsOpacity = useTransform(smoothProgress, [0.15, 0.3], [1, 0]);
 

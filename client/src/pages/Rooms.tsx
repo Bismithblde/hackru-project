@@ -66,9 +66,15 @@ const Rooms = () => {
                 <div className="flex-1">
                   <h4 className="font-semibold text-slate-900">{room.name}</h4>
                   <p className="text-sm text-slate-600">
-                    Code: <span className="font-mono font-bold">{room.code.slice(0, 3)}-{room.code.slice(3)}</span>
+                    Code:{" "}
+                    <span className="font-mono font-bold">
+                      {room.code.slice(0, 3)}-{room.code.slice(3)}
+                    </span>
                     {" • "}
-                    {room.participantCount} {room.participantCount === 1 ? "participant" : "participants"}
+                    {room.participantCount}{" "}
+                    {room.participantCount === 1
+                      ? "participant"
+                      : "participants"}
                   </p>
                 </div>
                 <button
@@ -91,7 +97,9 @@ const Rooms = () => {
         <div className="grid md:grid-cols-3 gap-6">
           <div>
             <div className="text-3xl mb-2">1️⃣</div>
-            <h4 className="font-semibold text-slate-900 mb-1">Create or Join</h4>
+            <h4 className="font-semibold text-slate-900 mb-1">
+              Create or Join
+            </h4>
             <p className="text-sm text-slate-600">
               Create a new room or join with a 6-digit code
             </p>
@@ -105,7 +113,9 @@ const Rooms = () => {
           </div>
           <div>
             <div className="text-3xl mb-2">3️⃣</div>
-            <h4 className="font-semibold text-slate-900 mb-1">Study Together</h4>
+            <h4 className="font-semibold text-slate-900 mb-1">
+              Study Together
+            </h4>
             <p className="text-sm text-slate-600">
               Chat, voice call, and use the whiteboard together
             </p>
@@ -127,4 +137,3 @@ const Rooms = () => {
 };
 
 export default Rooms;
-

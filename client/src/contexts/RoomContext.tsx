@@ -74,9 +74,7 @@ const initialState: RoomState = {
 export const RoomProvider = ({ children }: { children: ReactNode }) => {
   const [state, dispatch] = useReducer(roomReducer, initialState);
 
-  const createRoom = async (
-    data: CreateRoomRequest
-  ): Promise<Room | null> => {
+  const createRoom = async (data: CreateRoomRequest): Promise<Room | null> => {
     try {
       dispatch({ type: "SET_LOADING", payload: true });
       dispatch({ type: "SET_ERROR", payload: null });
@@ -85,7 +83,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       if (!response.room) {
         throw new Error("Invalid response from server");
       }
-      
+
       const newRoom = response.room;
 
       dispatch({ type: "ADD_ROOM", payload: newRoom });
@@ -111,7 +109,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       if (!response.room) {
         throw new Error("Invalid response from server");
       }
-      
+
       const room = response.room;
 
       // Update room in list if it exists, otherwise add it

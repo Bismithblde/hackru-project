@@ -20,13 +20,15 @@ const App: React.FC = () => {
             <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
               <Link to="/" className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center overflow-hidden">
-                  <img 
-                    src={bunnyLogo} 
-                    alt="StudyBunny Logo" 
+                  <img
+                    src={bunnyLogo}
+                    alt="StudyBunny Logo"
                     className="w-8 h-8 object-contain"
                   />
                 </div>
-                <h1 className="text-2xl font-bold text-slate-900">StudyBunny</h1>
+                <h1 className="text-2xl font-bold text-slate-900">
+                  StudyBunny
+                </h1>
               </Link>
               <nav className="flex gap-6">
                 <Link

@@ -16,16 +16,16 @@ export const CreateRoomModal = ({ isOpen, onClose }: CreateRoomModalProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!roomName.trim() || !username.trim()) {
       return;
     }
 
-    const room = await createRoom({ 
+    const room = await createRoom({
       name: roomName.trim(),
-      createdBy: username.trim()
+      createdBy: username.trim(),
     });
-    
+
     if (room) {
       setCreatedCode(room.code);
       // Store username in localStorage for persistence
@@ -61,7 +61,7 @@ export const CreateRoomModal = ({ isOpen, onClose }: CreateRoomModalProps) => {
             <h2 className="text-2xl font-bold text-slate-800 mb-4">
               Create Study Room
             </h2>
-            
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label
@@ -131,7 +131,7 @@ export const CreateRoomModal = ({ isOpen, onClose }: CreateRoomModalProps) => {
             <h2 className="text-2xl font-bold text-slate-800 mb-4">
               Room Created! 🎉
             </h2>
-            
+
             <div className="space-y-4">
               <div className="bg-indigo-50 p-4 rounded-lg">
                 <p className="text-sm text-slate-600 mb-2">Your Room Code:</p>

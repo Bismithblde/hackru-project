@@ -15,14 +15,14 @@ import Whiteboard from "../components/Whiteboard";
 const Room: React.FC = () => {
   const { code } = useParams();
   const roomId = code || "room-1";
-  
+
   // Get room data from context
   const { currentRoom, fetchRooms, rooms } = useRoomContext();
-  
+
   // Try to get username from localStorage
   const storedUsername = localStorage.getItem("studybunny_username");
   const [username, setUsername] = useState<string | null>(storedUsername);
-  
+
   const [activeTab, setActiveTab] = useState<"chat" | "whiteboard">("chat");
   const userIdRef = useRef<string>(uuidv4());
   const dailyContainerRef = useRef<HTMLDivElement>(null);
@@ -279,7 +279,10 @@ const Room: React.FC = () => {
                       />
                     </div>
                   ) : (
-                    <div className="p-6 flex items-center justify-center" style={{ height: "100%" }}>
+                    <div
+                      className="p-6 flex items-center justify-center"
+                      style={{ height: "100%" }}
+                    >
                       <Whiteboard socket={getSocket()!} roomId={roomId} />
                     </div>
                   )}

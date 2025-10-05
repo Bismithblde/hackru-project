@@ -93,7 +93,10 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ socket, roomId }) => {
 
   return (
     <ExcalidrawErrorBoundary>
-      <div className="flex flex-col gap-3 w-full" style={{ height: "550px", maxHeight: "550px" }}>
+      <div
+        className="flex flex-col gap-3 w-full"
+        style={{ height: "550px", maxHeight: "550px" }}
+      >
         {/* Collaboration Toggle - Above Canvas */}
         <div className="flex justify-end px-2">
           <button
@@ -111,15 +114,15 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ socket, roomId }) => {
         {/* Excalidraw Canvas - Fixed dimensions to prevent overflow */}
         <div
           className="bg-white rounded-lg border border-slate-200"
-          style={{ 
-            height: "500px", 
+          style={{
+            height: "500px",
             width: "100%",
             maxWidth: "1400px",
             maxHeight: "500px",
             minHeight: "500px",
             minWidth: "300px",
             overflow: "hidden",
-            position: "relative"
+            position: "relative",
           }}
         >
           <Excalidraw

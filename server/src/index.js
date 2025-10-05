@@ -57,11 +57,47 @@ const roomService = createRoomService();
 const socketController = createSocketController(io, roomService);
 
 io.on("connection", (socket) => {
+  console.log(`[Socket.io] Client connected: ${socket.id}`);
   socketController.register(socket);
 });
 
+// Graceful shutdown
+const shutdown = async () => {
+  console.log("\n[Server] Shutting down gracefully...");
+
+  try {
+    // Close Socket.io connections
+    io.close(() => {
+      console.log("[Server] Socket.io connections closed");
+    });
+
+    // Close HTTP server
+    server.close(() => {
+      console.log("[Server] HTTP server closed");
+      process.exit(0);
+    });
+
+    // Force exit after 10 seconds
+    setTimeout(() => {
+      console.error("[Server] Forced shutdown after timeout");
+      process.exit(1);
+    }, 10000);
+  } catch (error) {
+    console.error("[Server] Error during shutdown:", error);
+    process.exit(1);
+  }
+};
+
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);
+
 server.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server listening on port ${PORT}`);
-  console.log(`CORS allowed origins: ${CORS_ORIGIN}`);
+  console.log(`\n${"=".repeat(50)}`);
+  console.log(`🚀 Server started successfully!`);
+  console.log(`${"=".repeat(50)}`);
+  console.log(`📡 HTTP Server: http://localhost:${PORT}`);
+  console.log(`🔌 Socket.io: Ready`);
+  console.log(`🌐 CORS Origins: ${CORS_ORIGIN}`);
+  console.log(`${"=".repeat(50)}\n`);
   console.log(`Network access: http://192.168.40.38:${PORT}`);
 });

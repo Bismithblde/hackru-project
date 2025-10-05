@@ -26,16 +26,16 @@ export const JoinRoomModal = ({ isOpen, onClose }: JoinRoomModalProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (code.length !== 6 || !username.trim()) {
       return;
     }
 
-    const room = await joinRoom({ 
+    const room = await joinRoom({
       code,
-      username: username.trim()
+      username: username.trim(),
     });
-    
+
     if (room) {
       // Store username in localStorage for persistence
       localStorage.setItem("studybunny_username", username.trim());
@@ -58,7 +58,7 @@ export const JoinRoomModal = ({ isOpen, onClose }: JoinRoomModalProps) => {
         <h2 className="text-2xl font-bold text-slate-800 mb-4">
           Join Study Room
         </h2>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label

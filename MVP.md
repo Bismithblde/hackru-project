@@ -9,6 +9,7 @@
 ## ✨ Core Features (Implemented)
 
 ### 1. **Real-Time Voice Chat**
+
 - **Technology**: Daily.co integration
 - **Features**:
   - Crystal clear audio communication
@@ -19,6 +20,7 @@
   - Error handling and user feedback
 
 ### 2. **Messenger-Style Chat**
+
 - **Design**: Modern messenger-style bubbles
 - **Features**:
   - User messages: Right-aligned, blue background (`bg-indigo-600`)
@@ -29,6 +31,7 @@
   - Send messages with Enter key
 
 ### 3. **Collaborative Whiteboard**
+
 - **Technology**: Excalidraw integration
 - **Features**:
   - Full drawing toolkit (pen, shapes, arrows, text)
@@ -40,6 +43,7 @@
   - Fixed dimensions (500x600px) to prevent canvas errors
 
 ### 4. **User Presence System**
+
 - **Features**:
   - Real-time user list
   - User avatars with initials
@@ -48,6 +52,7 @@
   - Active participant count
 
 ### 5. **Leaderboard & Gamification**
+
 - **Features**:
   - Point-based ranking system
   - Award points to other users (1-10 points)
@@ -60,6 +65,7 @@
 ## 🎨 Design System
 
 ### **Color Palette** (shadcn-inspired)
+
 - **Primary**: Indigo-600 (`#4f46e5`)
 - **Background**: Slate-50 (`#f8fafc`)
 - **Text**: Slate-900 (`#0f172a`)
@@ -67,6 +73,7 @@
 - **White**: Cards and chat bubbles
 
 ### **UI Principles**
+
 - Solid colors over gradients
 - Minimal shadows
 - Clean borders (`border-slate-200`)
@@ -75,6 +82,7 @@
 - Responsive design (mobile-first)
 
 ### **Typography**
+
 - Large, bold headings
 - Inter/System font stack
 - Clear hierarchy
@@ -85,6 +93,7 @@
 ## 🏗️ Technical Architecture
 
 ### **Frontend**
+
 - **Framework**: React 18 + TypeScript
 - **Build Tool**: Vite
 - **Styling**: Tailwind CSS
@@ -95,12 +104,14 @@
 - **Real-time**: Socket.io-client
 
 ### **Backend**
+
 - **Runtime**: Node.js
 - **Framework**: Express.js
 - **Real-time**: Socket.io
 - **API**: Daily.co REST API for room creation
 
 ### **Code Organization**
+
 ```
 client/src/
 ├── assets/          # Images (bunny.png)
@@ -144,6 +155,7 @@ client/src/
 ## 🚀 Key Pages
 
 ### **1. Home Page** (`/`)
+
 - **Hero Section**:
   - Giant animated bunny logo (up to 600x600px)
   - Bounces in on page load
@@ -164,11 +176,13 @@ client/src/
   - Buttons disappear cleanly
 
 ### **2. Rooms Page** (`/rooms`)
+
 - Room selection interface
 - Create or join existing rooms
 - Room list with participant counts
 
 ### **3. Study Room** (`/rooms/:id`)
+
 - **Layout**: Grid system (2/3 main content, 1/3 sidebar)
 - **Components**:
   - User info card with voice controls
@@ -185,6 +199,7 @@ client/src/
 ## 🔌 Socket Events
 
 ### **Client → Server**
+
 - `join`: Join a room with username
 - `leave`: Leave a room
 - `chat:message`: Send a chat message
@@ -192,6 +207,7 @@ client/src/
 - `whiteboard-change`: Broadcast whiteboard updates
 
 ### **Server → Client**
+
 - `presence:update`: User list updates
 - `chat:message`: New chat message
 - `points:update`: Leaderboard updates
@@ -203,6 +219,7 @@ client/src/
 ## 📦 Dependencies
 
 ### **Frontend**
+
 ```json
 {
   "@daily-co/daily-js": "^0.x.x",
@@ -217,6 +234,7 @@ client/src/
 ```
 
 ### **Backend**
+
 ```json
 {
   "express": "^4.x.x",
@@ -247,6 +265,7 @@ client/src/
 ## ✅ Best Practices Implemented
 
 ### **Code Quality**
+
 - ✅ Modular file structure (types, constants, utils, hooks)
 - ✅ TypeScript for type safety
 - ✅ Barrel exports for clean imports
@@ -256,6 +275,7 @@ client/src/
 - ✅ Consistent naming conventions
 
 ### **Performance**
+
 - ✅ Vite for fast builds and HMR
 - ✅ Lazy loading with React.lazy (potential)
 - ✅ Optimized animations (GPU-accelerated transforms)
@@ -264,6 +284,7 @@ client/src/
 - ✅ Canvas size constraints to prevent browser errors
 
 ### **UX/UI**
+
 - ✅ Responsive design (mobile → desktop)
 - ✅ Loading states and error messages
 - ✅ Smooth animations (Framer Motion)
@@ -276,18 +297,21 @@ client/src/
 ## 🐛 Known Issues & Solutions
 
 ### **Canvas Size Error** ✅ SOLVED
+
 - **Problem**: Excalidraw canvas exceeded browser max size
-- **Solution**: 
+- **Solution**:
   - Fixed dimensions (500x600px)
   - maxWidth: 1400px
   - Error boundary with fallback UI
   - Removed dynamic sizing
 
 ### **TypeScript Import Error** ⚠️ MINOR
+
 - **Problem**: `./eventHandlers` module not found (IDE cache)
 - **Solution**: Code compiles fine with Vite, just restart TS server
 
 ### **React Router Warnings** ✅ SOLVED
+
 - **Problem**: Future flag warnings
 - **Solution**: Added `v7_startTransition` and `v7_relativeSplatPath` flags
 
@@ -296,6 +320,7 @@ client/src/
 ## 📈 Future Enhancements (Post-MVP)
 
 ### **Phase 2**
+
 - [ ] Persist whiteboard state to database
 - [ ] User authentication (OAuth, email/password)
 - [ ] Room history and saved sessions
@@ -304,6 +329,7 @@ client/src/
 - [ ] Pomodoro timer for study sessions
 
 ### **Phase 3**
+
 - [ ] AI study assistant (Q&A, summaries)
 - [ ] Flashcard system
 - [ ] Quiz creation and sharing
@@ -312,6 +338,7 @@ client/src/
 - [ ] Analytics dashboard
 
 ### **Phase 4**
+
 - [ ] Monetization (premium features)
 - [ ] University partnerships
 - [ ] Study groups and communities
@@ -323,6 +350,7 @@ client/src/
 ## 🚢 Deployment
 
 ### **Frontend**
+
 - **Platform**: Vercel / Netlify
 - **Build**: `npm run build`
 - **Environment Variables**:
@@ -330,6 +358,7 @@ client/src/
   - `VITE_DAILY_API_KEY`: Daily.co API key
 
 ### **Backend**
+
 - **Platform**: Railway / Render / Heroku
 - **Port**: 4000 (configurable)
 - **Environment Variables**:
@@ -353,7 +382,7 @@ client/src/
 
 - **Primary**: College students studying in groups
 - **Secondary**: High school students, online learners
-- **Use Cases**: 
+- **Use Cases**:
   - Group projects
   - Exam preparation
   - Homework help
@@ -367,6 +396,7 @@ client/src/
 **StudyBunny combines the simplicity of Discord with the productivity of Notion, creating a delightful study experience that makes learning together fun and effective.**
 
 ### **Differentiators**:
+
 1. 🎨 **Modern UI/UX**: Clean, professional design that students love
 2. 🐰 **Playful Branding**: Cute bunny mascot, gamification elements
 3. ⚡ **Zero Friction**: No downloads, instant join, web-based

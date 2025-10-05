@@ -5,6 +5,9 @@ function createRoomService() {
   // Map roomId -> Map(socketId -> { socketId, userId, username })
   const rooms = new Map();
 
+  // Performance optimization: O(1) socket-to-room lookup
+  const socketToRoom = new Map(); // socketId -> roomId
+
   function ensureRoom(roomId) {
     if (!rooms.has(roomId)) rooms.set(roomId, new Map());
     return rooms.get(roomId);
@@ -17,33 +20,49 @@ function createRoomService() {
       userId: user.userId,
       username: user.username,
     });
+
+    // Add to index for O(1) removal
+    socketToRoom.set(user.socketId, roomId);
   }
 
   function removeUser(roomId, socketId) {
     const room = rooms.get(roomId);
     if (!room) return;
+
     room.delete(socketId);
+    socketToRoom.delete(socketId);
+
     if (room.size === 0) rooms.delete(roomId);
   }
 
   function removeUserBySocket(socketId) {
-    for (const [roomId, map] of rooms.entries()) {
-      if (map.has(socketId)) {
-        map.delete(socketId);
-        if (map.size === 0) rooms.delete(roomId);
-      }
+    // O(1) lookup instead of O(n) loop!
+    const roomId = socketToRoom.get(socketId);
+    if (!roomId) return;
+
+    const room = rooms.get(roomId);
+    if (room) {
+      room.delete(socketId);
+      if (room.size === 0) rooms.delete(roomId);
     }
+
+    socketToRoom.delete(socketId);
   }
 
   function getUsers(roomId) {
     const room = rooms.get(roomId);
     if (!room) return [];
-    // return array of users
-    return Array.from(room.values()).map((u) => ({
-      userId: u.userId,
-      username: u.username,
-      socketId: u.socketId,
-    }));
+
+    // Single-pass iteration (optimized)
+    const users = [];
+    for (const user of room.values()) {
+      users.push({
+        userId: user.userId,
+        username: user.username,
+        socketId: user.socketId,
+      });
+    }
+    return users;
   }
 
   // Leaderboard: Map roomId -> Map(userId -> { userId, username, points })
