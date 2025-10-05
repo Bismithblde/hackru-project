@@ -10,17 +10,25 @@ const connectDB = async () => {
 
   const MONGODB_URI = process.env.MONGODB_URI;
 
+  console.log("🔍 MongoDB: Checking MONGODB_URI...");
+  console.log(`📝 MongoDB: URI exists: ${!!MONGODB_URI}`);
+  
   if (!MONGODB_URI) {
     console.warn("⚠️  MongoDB: MONGODB_URI not found in environment variables");
     console.warn("⚠️  MongoDB: Whiteboard persistence will be disabled");
     return;
   }
 
+  // Log URI with password masked for security
+  const maskedUri = MONGODB_URI.replace(/:[^:@]+@/, ':****@');
+  console.log(`🔗 MongoDB: Connection string: ${maskedUri}`);
+
   try {
     console.log("🔄 MongoDB: Attempting to connect...");
     const conn = await mongoose.connect(MONGODB_URI, {
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 30000, // Increased from 5000 to 30000
       socketTimeoutMS: 45000,
+      connectTimeoutMS: 30000,
     });
 
     isConnected = true;
@@ -45,6 +53,7 @@ const connectDB = async () => {
     });
   } catch (error) {
     console.error("❌ MongoDB: Connection failed:", error.message);
+    console.error("❌ MongoDB: Error name:", error.name);
     console.error("❌ MongoDB: Full error:", error);
     console.warn("⚠️  MongoDB: Whiteboard persistence will be disabled");
     isConnected = false;
