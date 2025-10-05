@@ -1,10 +1,10 @@
 import React from "react";
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Rooms from "./pages/Rooms";
 import Room from "./pages/Room";
 import SavedWhiteboard from "./pages/SavedWhiteboard";
-import bunnyLogo from "./assets/bunny.png";
+import Navbar from "./components/Navbar";
 import { RoomProvider } from "./contexts/RoomContext";
 
 const App: React.FC = () => {
@@ -17,36 +17,7 @@ const App: React.FC = () => {
         }}
       >
         <div className="min-h-screen bg-slate-50">
-          <header className="bg-white border-b sticky top-0 z-50">
-            <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-              <Link to="/" className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center overflow-hidden">
-                  <img
-                    src={bunnyLogo}
-                    alt="StudyBunny Logo"
-                    className="w-8 h-8 object-contain"
-                  />
-                </div>
-                <h1 className="text-2xl font-bold text-slate-900">
-                  StudyBunny
-                </h1>
-              </Link>
-              <nav className="flex gap-6">
-                <Link
-                  to="/"
-                  className="text-slate-600 hover:text-slate-900 font-medium transition-colors"
-                >
-                  Home
-                </Link>
-                <Link
-                  to="/rooms"
-                  className="text-slate-600 hover:text-slate-900 font-medium transition-colors"
-                >
-                  Rooms
-                </Link>
-              </nav>
-            </div>
-          </header>
+          <Navbar />
 
           <main className="max-w-7xl mx-auto">
             <Routes>
