@@ -4,7 +4,7 @@ import "@excalidraw/excalidraw/index.css";
 import { Socket } from "socket.io-client";
 
 interface WhiteboardProps {
-  socket: Socket;
+  socket: Socket | null;
   roomId: string;
 }
 

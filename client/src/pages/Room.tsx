@@ -313,7 +313,14 @@ const Room: React.FC = () => {
                     className="p-6 flex items-center justify-center"
                     style={{ height: "100%" }}
                   >
-                    <Whiteboard socket={getSocket()!} roomId={roomId} />
+                    {getSocket() ? (
+                      <Whiteboard socket={getSocket()!} roomId={roomId} />
+                    ) : (
+                      <div className="text-center text-slate-500">
+                        <div className="text-4xl mb-4">🎨</div>
+                        <p>Connecting to whiteboard...</p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
