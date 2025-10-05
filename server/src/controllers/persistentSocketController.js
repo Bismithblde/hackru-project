@@ -3,9 +3,13 @@ const persistentRoomService = require("../services/persistentRoomService");
 const { isRedisAvailable } = require("../config/redis");
 const { registerQuizEvents, cleanupRoomQuiz } = require("./quizController");
 
+// In-memory chat storage (no Redis)
+const roomMessages = new Map(); // roomId -> array of messages
+const MESSAGE_HISTORY_LIMIT = 50;
+
 /**
- * Enhanced Socket Controller with Redis Persistence
- * Integrates real-time events with persistent storage
+ * Enhanced Socket Controller with optional Redis Persistence
+ * Chat uses in-memory storage for reliability
  */
 function createPersistentSocketController(io, roomService) {
   function register(socket) {
@@ -39,12 +43,14 @@ function createPersistentSocketController(io, roomService) {
               username
             );
 
-            // Send message history to the user who just joined
-            if (data.messages && data.messages.length > 0) {
+            // Send in-memory chat history (no Redis)
+            const messages = roomMessages.get(roomId) || [];
+            if (messages.length > 0) {
               socket.emit("chat:history", {
-                messages: data.messages,
-                count: data.messages.length,
+                messages: messages,
+                count: messages.length,
               });
+              console.log(`[Socket] Sent ${messages.length} in-memory messages to ${username}`);
             }
 
             // Send whiteboard state to the user who just joined
@@ -67,6 +73,16 @@ function createPersistentSocketController(io, roomService) {
           console.log(
             `[Socket] Redis unavailable - skipping persistence for ${username} joining ${roomId}`
           );
+          
+          // Still send in-memory chat history even without Redis
+          const messages = roomMessages.get(roomId) || [];
+          if (messages.length > 0) {
+            socket.emit("chat:history", {
+              messages: messages,
+              count: messages.length,
+            });
+            console.log(`[Socket] Sent ${messages.length} in-memory messages to ${username} (no Redis)`);
+          }
         }
 
         // Broadcast presence update to all users in room
@@ -103,6 +119,12 @@ function createPersistentSocketController(io, roomService) {
         // Clean up quiz if room is empty
         if (users.length === 0) {
           cleanupRoomQuiz(roomId);
+          
+          // Clean up in-memory chat messages
+          if (roomMessages.has(roomId)) {
+            roomMessages.delete(roomId);
+            console.log(`[Socket] Cleaned up chat messages for empty room ${roomId}`);
+          }
         }
 
         console.log(`[Socket] User ${userId} left room ${roomId}`);
@@ -112,7 +134,7 @@ function createPersistentSocketController(io, roomService) {
     });
 
     /**
-     * Chat message event - Broadcast immediately, persist async
+     * Chat message event - In-memory storage only (no Redis)
      */
     socket.on("chat:message", async (payload = {}) => {
       const ok = requireFields(payload, ["roomId", "userId", "message"]);
@@ -129,23 +151,21 @@ function createPersistentSocketController(io, roomService) {
         ts: ts || Date.now(),
       };
 
+      // Store in memory
+      if (!roomMessages.has(roomId)) {
+        roomMessages.set(roomId, []);
+      }
+      const messages = roomMessages.get(roomId);
+      messages.push(out);
+      
+      // Keep only last N messages
+      if (messages.length > MESSAGE_HISTORY_LIMIT) {
+        messages.shift();
+      }
+
       // Broadcast immediately to all users in room
       io.to(roomId).emit("chat:message", out);
-      console.log(`[Socket] Broadcast message to room ${roomId}:`, out);
-
-      // Try to persist to Redis async (non-blocking)
-      try {
-        await persistentRoomService.saveMessage(roomId, {
-          userId: out.userId,
-          username: out.username,
-          message: out.message,
-          timestamp: out.ts,
-        });
-        console.log(`[Socket] Message persisted to Redis`);
-      } catch (error) {
-        console.error("[Socket] Failed to persist message (non-blocking):", error.message);
-        // Don't fail the broadcast if Redis fails
-      }
+      console.log(`[Socket] Chat message stored and broadcast in room ${roomId} (in-memory only)`);
     });
 
     /**
@@ -244,6 +264,15 @@ function createPersistentSocketController(io, roomService) {
       for (const [roomId] of roomService.rooms) {
         const users = roomService.getUsers(roomId);
         io.to(roomId).emit("presence:update", users);
+
+        // Clean up in-memory chat if room is empty
+        if (users.length === 0) {
+          if (roomMessages.has(roomId)) {
+            roomMessages.delete(roomId);
+            console.log(`[Socket] Cleaned up chat for empty room ${roomId} on disconnect`);
+          }
+          cleanupRoomQuiz(roomId);
+        }
 
         // Remove from Redis if we have user info
         if (userInfo && userInfo.userId) {
