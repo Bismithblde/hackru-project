@@ -13,6 +13,7 @@ const {
 } = require("./controllers/persistentSocketController");
 const { createDailyRoom } = require("./services/dailyService");
 const { roomRouter } = require("./routes/roomRoutes");
+const timeTrackingRouter = require("./routes/timeTracking");
 const {
   saveWhiteboard,
   loadWhiteboard,
@@ -44,6 +45,9 @@ app.get("/", (req, res) => res.json({ status: "ok", time: Date.now() }));
 
 // Room management API routes
 app.use("/api/rooms", roomRouter);
+
+// Time tracking API routes
+app.use("/api/time-tracking", timeTrackingRouter);
 
 // Whiteboard persistence routes
 app.post("/api/whiteboards/save", saveWhiteboard);
@@ -118,6 +122,19 @@ const shutdown = async () => {
 
 process.on("SIGTERM", shutdown);
 process.on("SIGINT", shutdown);
+
+// Schedule cleanup of stale time tracking sessions (every 30 minutes)
+const timeTrackingService = require("./services/timeTrackingService");
+setInterval(async () => {
+  try {
+    const cleanedCount = await timeTrackingService.cleanupStaleSessions(60);
+    if (cleanedCount > 0) {
+      console.log(`[TimeTracking] Cleaned up ${cleanedCount} stale sessions`);
+    }
+  } catch (error) {
+    console.error("[TimeTracking] Error during scheduled cleanup:", error);
+  }
+}, 30 * 60 * 1000); // 30 minutes
 
 server.listen(PORT, "0.0.0.0", async () => {
   console.log(`\n${"=".repeat(50)}`);

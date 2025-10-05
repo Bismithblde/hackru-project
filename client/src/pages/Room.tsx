@@ -12,6 +12,7 @@ import AudioControls from "../components/AudioControls";
 import Leaderboard from "../components/Leaderboard";
 import Whiteboard from "../components/Whiteboard";
 import Quiz from "../components/Quiz";
+import TimeTracker from "../components/TimeTracker";
 
 const Room: React.FC = () => {
   const { code } = useParams();
@@ -363,6 +364,12 @@ const Room: React.FC = () => {
 
             {/* Leaderboard & Actions */}
             <div className="space-y-6">
+              {/* Time Tracker */}
+              <TimeTracker 
+                roomId={roomId} 
+                currentUserId={userIdRef.current}
+              />
+
               <div className="bg-white rounded-lg border border-slate-200 p-6">
                 <h3 className="text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2">
                   <span>🏆</span> Leaderboard
@@ -370,7 +377,10 @@ const Room: React.FC = () => {
                 <Leaderboard entries={leaderboard} />
               </div>
 
-              <div id="quiz-section" className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg border border-slate-200 p-6">
+              <div
+                id="quiz-section"
+                className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg border border-slate-200 p-6"
+              >
                 <h3 className="text-lg font-semibold text-slate-900 mb-1 flex items-center gap-2">
                   <span>🎯</span> Study Quiz
                   {roomData?.createdBy === username && (
@@ -380,8 +390,8 @@ const Room: React.FC = () => {
                   )}
                 </h3>
                 <p className="text-sm text-slate-600 mb-4">
-                  {roomData?.createdBy === username 
-                    ? "Create and manage quizzes" 
+                  {roomData?.createdBy === username
+                    ? "Create and manage quizzes"
                     : "Test your knowledge"}
                 </p>
                 <Quiz

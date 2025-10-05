@@ -55,7 +55,11 @@ export function useRoom({ roomId, userId, username }: UseRoomOptions) {
     };
 
     const handleChatHistory = (payload: { messages: Message[] }) => {
-      console.log("[useRoom] Received chat history:", payload.messages?.length || 0, "messages");
+      console.log(
+        "[useRoom] Received chat history:",
+        payload.messages?.length || 0,
+        "messages"
+      );
       if (payload.messages && Array.isArray(payload.messages)) {
         setMessages(payload.messages);
       }

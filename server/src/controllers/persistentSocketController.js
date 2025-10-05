@@ -2,6 +2,7 @@ const { requireFields } = require("../utils/validator");
 const persistentRoomService = require("../services/persistentRoomService");
 const { isRedisAvailable } = require("../config/redis");
 const { registerQuizEvents, cleanupRoomQuiz } = require("./quizController");
+const timeTrackingService = require("../services/timeTrackingService");
 
 // In-memory chat storage (no Redis)
 const roomMessages = new Map(); // roomId -> array of messages
@@ -30,11 +31,23 @@ function createPersistentSocketController(io, roomService) {
       try {
         // Join Socket.io room
         socket.join(roomId);
-        console.log(`[Socket] ✅ Socket ${socket.id} joined Socket.io room ${roomId}`);
+        console.log(
+          `[Socket] ✅ Socket ${socket.id} joined Socket.io room ${roomId}`
+        );
 
         // Add to in-memory room service (for presence)
         roomService.addUser(roomId, { socketId: socket.id, userId, username });
-        console.log(`[Socket] ✅ Added ${username} to in-memory room service for ${roomId}`);
+        console.log(
+          `[Socket] ✅ Added ${username} to in-memory room service for ${roomId}`
+        );
+
+        // Start time tracking
+        try {
+          await timeTrackingService.startTracking(roomId, userId, username);
+        } catch (err) {
+          console.error("[Socket] Error starting time tracking:", err.message);
+          // Continue anyway - time tracking is optional
+        }
 
         // Add to Redis (for persistence) - only if Redis is available
         if (isRedisAvailable()) {
@@ -52,7 +65,9 @@ function createPersistentSocketController(io, roomService) {
                 messages: messages,
                 count: messages.length,
               });
-              console.log(`[Socket] Sent ${messages.length} in-memory messages to ${username}`);
+              console.log(
+                `[Socket] Sent ${messages.length} in-memory messages to ${username}`
+              );
             }
 
             // Send whiteboard state to the user who just joined
@@ -75,7 +90,7 @@ function createPersistentSocketController(io, roomService) {
           console.log(
             `[Socket] Redis unavailable - skipping persistence for ${username} joining ${roomId}`
           );
-          
+
           // Still send in-memory chat history even without Redis
           const messages = roomMessages.get(roomId) || [];
           if (messages.length > 0) {
@@ -83,7 +98,9 @@ function createPersistentSocketController(io, roomService) {
               messages: messages,
               count: messages.length,
             });
-            console.log(`[Socket] Sent ${messages.length} in-memory messages to ${username} (no Redis)`);
+            console.log(
+              `[Socket] Sent ${messages.length} in-memory messages to ${username} (no Redis)`
+            );
           }
         }
 
@@ -121,11 +138,13 @@ function createPersistentSocketController(io, roomService) {
         // Clean up quiz if room is empty
         if (users.length === 0) {
           cleanupRoomQuiz(roomId);
-          
+
           // Clean up in-memory chat messages
           if (roomMessages.has(roomId)) {
             roomMessages.delete(roomId);
-            console.log(`[Socket] Cleaned up chat messages for empty room ${roomId}`);
+            console.log(
+              `[Socket] Cleaned up chat messages for empty room ${roomId}`
+            );
           }
         }
 
@@ -140,7 +159,7 @@ function createPersistentSocketController(io, roomService) {
      */
     socket.on("chat:message", async (payload = {}) => {
       console.log(`[Socket] Received chat:message event:`, payload);
-      
+
       const ok = requireFields(payload, ["roomId", "userId", "message"]);
       if (!ok) {
         console.error(`[Socket] Chat message validation failed:`, payload);
@@ -167,13 +186,15 @@ function createPersistentSocketController(io, roomService) {
       }
       const messages = roomMessages.get(roomId);
       messages.push(out);
-      
+
       // Keep only last N messages
       if (messages.length > MESSAGE_HISTORY_LIMIT) {
         messages.shift();
       }
 
-      console.log(`[Socket] Room ${roomId} now has ${messages.length} messages`);
+      console.log(
+        `[Socket] Room ${roomId} now has ${messages.length} messages`
+      );
 
       // Broadcast immediately to all users in room
       io.to(roomId).emit("chat:message", out);
@@ -272,6 +293,17 @@ function createPersistentSocketController(io, roomService) {
       // Remove from in-memory service
       const userInfo = roomService.removeUserBySocket(socket.id);
 
+      // End time tracking for this user in all rooms
+      if (userInfo && userInfo.userId) {
+        for (const [roomId] of roomService.rooms) {
+          try {
+            await timeTrackingService.endTracking(roomId, userInfo.userId);
+          } catch (err) {
+            console.error("[Socket] Error ending time tracking on disconnect:", err.message);
+          }
+        }
+      }
+
       // Update presence for all rooms this user was in
       for (const [roomId] of roomService.rooms) {
         const users = roomService.getUsers(roomId);
@@ -281,7 +313,9 @@ function createPersistentSocketController(io, roomService) {
         if (users.length === 0) {
           if (roomMessages.has(roomId)) {
             roomMessages.delete(roomId);
-            console.log(`[Socket] Cleaned up chat for empty room ${roomId} on disconnect`);
+            console.log(
+              `[Socket] Cleaned up chat for empty room ${roomId} on disconnect`
+            );
           }
           cleanupRoomQuiz(roomId);
         }

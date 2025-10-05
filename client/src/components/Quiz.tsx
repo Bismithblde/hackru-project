@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { getSocket, on, off, emit } from "../lib/socket";
 import { SOCKET_EVENTS } from "../constants";
 
@@ -34,6 +34,7 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
   const [showStartNotification, setShowStartNotification] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [isCreatingQuiz, setIsCreatingQuiz] = useState(false);
+  const isCreatingQuizRef = useRef(false); // Immediate flag to prevent double-clicks
 
   // Quiz creation form state
   const [quizTitle, setQuizTitle] = useState("");
@@ -68,6 +69,7 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
       setActiveQuiz(data.quiz);
       setShowCreateForm(false);
       setErrorMessage("");
+      isCreatingQuizRef.current = false; // Reset ref
       setIsCreatingQuiz(false); // Re-enable creation for future quizzes
     };
 
@@ -79,28 +81,28 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
       setShowResult(false);
       setUserAnswers({});
       setErrorMessage("");
-      
+
       // Show notification that quiz has started
       if (!isOwner) {
         setShowStartNotification(true);
         setTimeout(() => setShowStartNotification(false), 5000);
-        
+
         // Auto-scroll to quiz section if not owner
-        const quizElement = document.getElementById('quiz-section');
+        const quizElement = document.getElementById("quiz-section");
         if (quizElement) {
-          quizElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          quizElement.scrollIntoView({ behavior: "smooth", block: "nearest" });
         }
       }
     };
 
     const handleQuizEnded = (data: any) => {
       console.log("[Quiz] ✅ Quiz ended event received:", data);
-      
+
       // Show results if available
       if (data.results && data.results.length > 0) {
         console.log("[Quiz] Final results:", data.results);
       }
-      
+
       setActiveQuiz(null);
       setShowResult(false);
       setErrorMessage("");
@@ -113,6 +115,7 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
     const handleQuizError = (data: any) => {
       console.error("[Quiz] ❌ Quiz error event received:", data);
       setErrorMessage(data.message || "An error occurred");
+      isCreatingQuizRef.current = false; // Reset ref
       setIsCreatingQuiz(false); // Re-enable on error
       setTimeout(() => setErrorMessage(""), 5000);
     };
@@ -140,18 +143,25 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
   }, [roomId]);
 
   const handleCreateQuiz = () => {
-    if (isCreatingQuiz) {
+    // Check both state and ref for immediate protection
+    if (isCreatingQuiz || isCreatingQuizRef.current) {
       console.log("[Quiz] Already creating quiz, ignoring duplicate click");
       return;
     }
-    
+
+    // Set both immediately
+    isCreatingQuizRef.current = true;
+    setIsCreatingQuiz(true);
+
     console.log("[Quiz] handleCreateQuiz called");
     console.log("[Quiz] Quiz title:", quizTitle);
     console.log("[Quiz] Questions:", questions);
-    
+
     if (!quizTitle.trim()) {
       setErrorMessage("Please enter a quiz title");
       console.error("[Quiz] Validation failed: no title");
+      isCreatingQuizRef.current = false;
+      setIsCreatingQuiz(false);
       return;
     }
 
@@ -161,17 +171,21 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
       if (!q.question.trim()) {
         setErrorMessage(`Please enter question ${i + 1}`);
         console.error(`[Quiz] Validation failed: question ${i + 1} is empty`);
+        isCreatingQuizRef.current = false;
+        setIsCreatingQuiz(false);
         return;
       }
       if (q.options.some((opt) => !opt.trim())) {
         setErrorMessage(`Please fill all options for question ${i + 1}`);
-        console.error(`[Quiz] Validation failed: question ${i + 1} has empty options`);
+        console.error(
+          `[Quiz] Validation failed: question ${i + 1} has empty options`
+        );
+        isCreatingQuizRef.current = false;
+        setIsCreatingQuiz(false);
         return;
       }
     }
 
-    setIsCreatingQuiz(true);
-    
     const quiz: Quiz = {
       id: Date.now().toString(),
       title: quizTitle,
@@ -270,9 +284,10 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
 
   const handleNextQuestion = () => {
     if (!activeQuiz) return;
-    
-    const isLastQuestion = currentQuestionIndex === activeQuiz.questions.length - 1;
-    
+
+    const isLastQuestion =
+      currentQuestionIndex === activeQuiz.questions.length - 1;
+
     if (isLastQuestion) {
       setShowResult(true);
     } else {
@@ -337,107 +352,108 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
         {quizStartNotification}
         {errorNotification}
         <div className="space-y-4 max-h-[500px] overflow-y-auto">
-        <div className="sticky top-0 bg-gradient-to-br from-indigo-50 to-purple-50 p-4 rounded-lg border border-indigo-200 z-10">
-          <h4 className="font-semibold text-slate-900 mb-2">Create Quiz</h4>
-          <input
-            type="text"
-            placeholder="Quiz Title"
-            value={quizTitle}
-            onChange={(e) => setQuizTitle(e.target.value)}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
-          />
-        </div>
+          <div className="sticky top-0 bg-gradient-to-br from-indigo-50 to-purple-50 p-4 rounded-lg border border-indigo-200 z-10">
+            <h4 className="font-semibold text-slate-900 mb-2">Create Quiz</h4>
+            <input
+              type="text"
+              placeholder="Quiz Title"
+              value={quizTitle}
+              onChange={(e) => setQuizTitle(e.target.value)}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
+            />
+          </div>
 
-        {questions.map((q, qIndex) => (
-          <div
-            key={qIndex}
-            className="bg-white border border-slate-200 rounded-lg p-4 space-y-3"
-          >
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Question {qIndex + 1}
-                </label>
-                <input
-                  type="text"
-                  placeholder="Enter question"
-                  value={q.question}
-                  onChange={(e) =>
-                    handleQuestionChange(qIndex, "question", e.target.value)
-                  }
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
-                />
-              </div>
-              {questions.length > 1 && (
-                <button
-                  onClick={() => handleRemoveQuestion(qIndex)}
-                  className="mt-7 px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors text-sm"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-700">
-                Options (select correct answer)
-              </label>
-              {q.options.map((opt, optIndex) => (
-                <div key={optIndex} className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name={`correct-${qIndex}`}
-                    checked={q.correctAnswer === optIndex}
-                    onChange={() =>
-                      handleQuestionChange(qIndex, "correctAnswer", optIndex)
-                    }
-                    className="w-4 h-4 text-indigo-600"
-                  />
+          {questions.map((q, qIndex) => (
+            <div
+              key={qIndex}
+              className="bg-white border border-slate-200 rounded-lg p-4 space-y-3"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Question {qIndex + 1}
+                  </label>
                   <input
                     type="text"
-                    placeholder={`Option ${optIndex + 1}`}
-                    value={opt}
+                    placeholder="Enter question"
+                    value={q.question}
                     onChange={(e) =>
-                      handleOptionChange(qIndex, optIndex, e.target.value)
+                      handleQuestionChange(qIndex, "question", e.target.value)
                     }
-                    className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
                   />
                 </div>
-              ))}
+                {questions.length > 1 && (
+                  <button
+                    onClick={() => handleRemoveQuestion(qIndex)}
+                    className="mt-7 px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors text-sm"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-700">
+                  Options (select correct answer)
+                </label>
+                {q.options.map((opt, optIndex) => (
+                  <div key={optIndex} className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name={`correct-${qIndex}`}
+                      checked={q.correctAnswer === optIndex}
+                      onChange={() =>
+                        handleQuestionChange(qIndex, "correctAnswer", optIndex)
+                      }
+                      className="w-4 h-4 text-indigo-600"
+                    />
+                    <input
+                      type="text"
+                      placeholder={`Option ${optIndex + 1}`}
+                      value={opt}
+                      onChange={(e) =>
+                        handleOptionChange(qIndex, optIndex, e.target.value)
+                      }
+                      className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
+          ))}
+
+          <button
+            onClick={handleAddQuestion}
+            className="w-full px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors font-medium border-2 border-dashed border-slate-300"
+          >
+            + Add Question
+          </button>
+
+          <div className="flex gap-3 sticky bottom-0 bg-gradient-to-br from-indigo-50 to-purple-50 p-4 rounded-lg border border-indigo-200">
+            <button
+              onClick={handleCreateQuiz}
+              disabled={isCreatingQuiz}
+              className={`flex-1 px-4 py-3 rounded-lg transition-all transform font-medium shadow-lg ${
+                isCreatingQuiz
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-green-600 text-white hover:bg-green-700 hover:scale-[1.02]"
+              }`}
+            >
+              {isCreatingQuiz ? "Creating..." : "Create Quiz"}
+            </button>
+            <button
+              onClick={() => {
+                setShowCreateForm(false);
+                isCreatingQuizRef.current = false;
+                setIsCreatingQuiz(false);
+              }}
+              className="px-4 py-3 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors"
+            >
+              Cancel
+            </button>
           </div>
-        ))}
-
-        <button
-          onClick={handleAddQuestion}
-          className="w-full px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors font-medium border-2 border-dashed border-slate-300"
-        >
-          + Add Question
-        </button>
-
-        <div className="flex gap-3 sticky bottom-0 bg-gradient-to-br from-indigo-50 to-purple-50 p-4 rounded-lg border border-indigo-200">
-          <button
-            onClick={handleCreateQuiz}
-            disabled={isCreatingQuiz}
-            className={`flex-1 px-4 py-3 rounded-lg transition-all transform font-medium shadow-lg ${
-              isCreatingQuiz
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-green-600 text-white hover:bg-green-700 hover:scale-[1.02]"
-            }`}
-          >
-            {isCreatingQuiz ? "Creating..." : "Create Quiz"}
-          </button>
-          <button
-            onClick={() => {
-              setShowCreateForm(false);
-              setIsCreatingQuiz(false);
-            }}
-            className="px-4 py-3 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors"
-          >
-            Cancel
-          </button>
         </div>
-      </div>
       </>
     );
   }
@@ -449,32 +465,32 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
         {quizStartNotification}
         {errorNotification}
         <div className="space-y-4">
-        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg p-6 border-2 border-indigo-200">
-          <div className="text-center">
-            <div className="text-5xl mb-3">📝</div>
-            <h4 className="text-xl font-bold text-slate-900 mb-2">
-              {activeQuiz.title}
-            </h4>
-            <p className="text-sm text-slate-600 mb-4">
-              {activeQuiz.questions.length} questions
-            </p>
+          <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg p-6 border-2 border-indigo-200">
+            <div className="text-center">
+              <div className="text-5xl mb-3">📝</div>
+              <h4 className="text-xl font-bold text-slate-900 mb-2">
+                {activeQuiz.title}
+              </h4>
+              <p className="text-sm text-slate-600 mb-4">
+                {activeQuiz.questions.length} questions
+              </p>
+            </div>
           </div>
+
+          <button
+            onClick={handleStartQuiz}
+            className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all transform hover:scale-[1.02] font-medium shadow-lg"
+          >
+            Start Quiz for Everyone
+          </button>
+
+          <button
+            onClick={handleEndQuiz}
+            className="w-full px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+          >
+            Delete Quiz
+          </button>
         </div>
-
-        <button
-          onClick={handleStartQuiz}
-          className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all transform hover:scale-[1.02] font-medium shadow-lg"
-        >
-          Start Quiz for Everyone
-        </button>
-
-        <button
-          onClick={handleEndQuiz}
-          className="w-full px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
-        >
-          Delete Quiz
-        </button>
-      </div>
       </>
     );
   }
@@ -501,151 +517,154 @@ const QuizComponent: React.FC<QuizProps> = ({ roomId, username, isOwner }) => {
         {quizStartNotification}
         {errorNotification}
         <div className="space-y-4">
-        <div className="text-center p-6 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg border-2 border-indigo-200">
-          <div className="text-6xl mb-4">
-            {percentage >= 70 ? "🎉" : percentage >= 50 ? "👍" : "💪"}
+          <div className="text-center p-6 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg border-2 border-indigo-200">
+            <div className="text-6xl mb-4">
+              {percentage >= 70 ? "🎉" : percentage >= 50 ? "👍" : "💪"}
+            </div>
+            <h3 className="text-2xl font-bold text-slate-900 mb-2">
+              Quiz Complete!
+            </h3>
+            <p className="text-4xl font-bold text-indigo-600 mb-2">
+              {score} / {activeQuiz.questions.length}
+            </p>
+            <p className="text-lg text-slate-600">{percentage}% correct</p>
           </div>
-          <h3 className="text-2xl font-bold text-slate-900 mb-2">
-            Quiz Complete!
-          </h3>
-          <p className="text-4xl font-bold text-indigo-600 mb-2">
-            {score} / {activeQuiz.questions.length}
-          </p>
-          <p className="text-lg text-slate-600">{percentage}% correct</p>
-        </div>
 
-        <button
-          onClick={handleRestartQuiz}
-          className="w-full px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium shadow-lg"
-        >
-          Try Again
-        </button>
-      </div>
+          <button
+            onClick={handleRestartQuiz}
+            className="w-full px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium shadow-lg"
+          >
+            Try Again
+          </button>
+        </div>
       </>
     );
   }
 
   // Quiz taking view
   if (!activeQuiz) return null;
-  
+
   const currentQuestion = activeQuiz.questions[currentQuestionIndex];
-  const isLastQuestion = currentQuestionIndex === activeQuiz.questions.length - 1;
+  const isLastQuestion =
+    currentQuestionIndex === activeQuiz.questions.length - 1;
 
   return (
     <>
       {quizStartNotification}
       {errorNotification}
       <div className="space-y-4">
-      {/* Progress Bar */}
-      <div className="space-y-2">
-        <div className="flex justify-between items-center text-sm">
-          <span className="font-semibold text-slate-700">
-            Question {currentQuestionIndex + 1} of {activeQuiz.questions.length}
-          </span>
-          <span className="text-slate-500">
-            Score: {score}/{currentQuestionIndex}
-          </span>
-        </div>
-        <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500"
-            style={{
-              width: `${
-                ((currentQuestionIndex + 1) / activeQuiz.questions.length) * 100
-              }%`,
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Question Card */}
-      <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg p-6 border-2 border-indigo-200">
-        <div className="flex items-start gap-3 mb-4">
-          <div className="w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
-            {currentQuestionIndex + 1}
+        {/* Progress Bar */}
+        <div className="space-y-2">
+          <div className="flex justify-between items-center text-sm">
+            <span className="font-semibold text-slate-700">
+              Question {currentQuestionIndex + 1} of{" "}
+              {activeQuiz.questions.length}
+            </span>
+            <span className="text-slate-500">
+              Score: {score}/{currentQuestionIndex}
+            </span>
           </div>
-          <h3 className="text-lg font-semibold text-slate-900 leading-tight">
-            {currentQuestion.question}
-          </h3>
+          <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500"
+              style={{
+                width: `${
+                  ((currentQuestionIndex + 1) / activeQuiz.questions.length) *
+                  100
+                }%`,
+              }}
+            />
+          </div>
         </div>
 
-        {/* Answer Options */}
-        <div className="space-y-3">
-          {currentQuestion.options.map((option, index) => {
-            const isSelected = selectedAnswer === index;
-            const isCorrect = index === currentQuestion.correctAnswer;
-            const showCorrect = answered && isCorrect;
-            const showIncorrect = answered && isSelected && !isCorrect;
+        {/* Question Card */}
+        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg p-6 border-2 border-indigo-200">
+          <div className="flex items-start gap-3 mb-4">
+            <div className="w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
+              {currentQuestionIndex + 1}
+            </div>
+            <h3 className="text-lg font-semibold text-slate-900 leading-tight">
+              {currentQuestion.question}
+            </h3>
+          </div>
 
-            return (
-              <button
-                key={index}
-                onClick={() => handleSelectAnswer(index)}
-                disabled={answered}
-                className={`w-full p-4 rounded-lg text-left font-medium transition-all border-2 ${
-                  showCorrect
-                    ? "bg-green-100 border-green-500 text-green-900"
-                    : showIncorrect
-                    ? "bg-red-100 border-red-500 text-red-900"
-                    : isSelected
-                    ? "bg-indigo-100 border-indigo-500 text-indigo-900"
-                    : "bg-white border-slate-300 text-slate-700 hover:border-indigo-400 hover:bg-indigo-50"
-                } ${answered ? "cursor-not-allowed" : "cursor-pointer"}`}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                      showCorrect
-                        ? "bg-green-500 border-green-500"
-                        : showIncorrect
-                        ? "bg-red-500 border-red-500"
-                        : isSelected
-                        ? "bg-indigo-500 border-indigo-500"
-                        : "border-slate-400"
-                    }`}
-                  >
-                    {showCorrect && (
-                      <span className="text-white text-sm">✓</span>
-                    )}
-                    {showIncorrect && (
-                      <span className="text-white text-sm">✕</span>
-                    )}
-                    {!answered && isSelected && (
-                      <span className="w-3 h-3 bg-white rounded-full" />
-                    )}
+          {/* Answer Options */}
+          <div className="space-y-3">
+            {currentQuestion.options.map((option, index) => {
+              const isSelected = selectedAnswer === index;
+              const isCorrect = index === currentQuestion.correctAnswer;
+              const showCorrect = answered && isCorrect;
+              const showIncorrect = answered && isSelected && !isCorrect;
+
+              return (
+                <button
+                  key={index}
+                  onClick={() => handleSelectAnswer(index)}
+                  disabled={answered}
+                  className={`w-full p-4 rounded-lg text-left font-medium transition-all border-2 ${
+                    showCorrect
+                      ? "bg-green-100 border-green-500 text-green-900"
+                      : showIncorrect
+                      ? "bg-red-100 border-red-500 text-red-900"
+                      : isSelected
+                      ? "bg-indigo-100 border-indigo-500 text-indigo-900"
+                      : "bg-white border-slate-300 text-slate-700 hover:border-indigo-400 hover:bg-indigo-50"
+                  } ${answered ? "cursor-not-allowed" : "cursor-pointer"}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                        showCorrect
+                          ? "bg-green-500 border-green-500"
+                          : showIncorrect
+                          ? "bg-red-500 border-red-500"
+                          : isSelected
+                          ? "bg-indigo-500 border-indigo-500"
+                          : "border-slate-400"
+                      }`}
+                    >
+                      {showCorrect && (
+                        <span className="text-white text-sm">✓</span>
+                      )}
+                      {showIncorrect && (
+                        <span className="text-white text-sm">✕</span>
+                      )}
+                      {!answered && isSelected && (
+                        <span className="w-3 h-3 bg-white rounded-full" />
+                      )}
+                    </div>
+                    <span>{option}</span>
                   </div>
-                  <span>{option}</span>
-                </div>
-              </button>
-            );
-          })}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-3">
+          {!answered ? (
+            <button
+              onClick={handleSubmitAnswer}
+              disabled={selectedAnswer === null}
+              className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all shadow-lg ${
+                selectedAnswer === null
+                  ? "bg-slate-300 text-slate-500 cursor-not-allowed"
+                  : "bg-indigo-600 text-white hover:bg-indigo-700"
+              }`}
+            >
+              Submit Answer
+            </button>
+          ) : (
+            <button
+              onClick={handleNextQuestion}
+              className="flex-1 px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all font-medium shadow-lg"
+            >
+              {isLastQuestion ? "See Results →" : "Next Question →"}
+            </button>
+          )}
         </div>
       </div>
-
-      {/* Action Buttons */}
-      <div className="flex gap-3">
-        {!answered ? (
-          <button
-            onClick={handleSubmitAnswer}
-            disabled={selectedAnswer === null}
-            className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all shadow-lg ${
-              selectedAnswer === null
-                ? "bg-slate-300 text-slate-500 cursor-not-allowed"
-                : "bg-indigo-600 text-white hover:bg-indigo-700"
-            }`}
-          >
-            Submit Answer
-          </button>
-        ) : (
-          <button
-            onClick={handleNextQuestion}
-            className="flex-1 px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all font-medium shadow-lg"
-          >
-            {isLastQuestion ? "See Results →" : "Next Question →"}
-          </button>
-        )}
-      </div>
-    </div>
     </>
   );
 };
