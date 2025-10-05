@@ -25,50 +25,85 @@ export const authService = {
     password: string,
     displayName?: string
   ): Promise<AuthResponse> => {
-    const response = await fetch(`${API_BASE_URL}/auth/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password, displayName }),
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password, displayName }),
+      });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || "Failed to register");
+      const contentType = response.headers.get("content-type");
+      
+      if (!response.ok) {
+        // Try to get JSON error if available
+        if (contentType && contentType.includes("application/json")) {
+          const error = await response.json();
+          throw new Error(error.error || "Failed to register");
+        } else {
+          throw new Error(`Server error: ${response.status} ${response.statusText}`);
+        }
+      }
+
+      return await response.json();
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error("Network error. Please check your connection.");
     }
-
-    return await response.json();
   },
 
   /**
    * Login user
    */
   login: async (username: string, password: string): Promise<AuthResponse> => {
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || "Failed to login");
+      const contentType = response.headers.get("content-type");
+
+      if (!response.ok) {
+        // Try to get JSON error if available
+        if (contentType && contentType.includes("application/json")) {
+          const error = await response.json();
+          throw new Error(error.error || "Failed to login");
+        } else {
+          throw new Error(`Server error: ${response.status} ${response.statusText}`);
+        }
+      }
+
+      return await response.json();
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error("Network error. Please check your connection.");
     }
-
-    return await response.json();
   },
 
   /**
    * Check if username is available
    */
   checkUsername: async (username: string): Promise<CheckUsernameResponse> => {
-    const response = await fetch(
-      `${API_BASE_URL}/auth/check/${encodeURIComponent(username)}`
-    );
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/auth/check/${encodeURIComponent(username)}`
+      );
 
-    if (!response.ok) {
-      throw new Error("Failed to check username");
+      if (!response.ok) {
+        throw new Error("Failed to check username");
+      }
+
+      return await response.json();
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error("Network error. Please check your connection.");
     }
-
-    return await response.json();
   },
 };
